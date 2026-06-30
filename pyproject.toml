@@ -35,6 +35,9 @@ dependencies = [
     "playwright>=1.40.0",
     "aiosqlite>=0.20.0",
 
+    # HTML → EPUB Accessibility 1.1 path (html_to_epub + epub_verifier)
+    "ebooklib>=0.18",
+
     # faithful_rebuild / font work
     "fonttools>=4.50.0",
     "reportlab>=4.0.0",

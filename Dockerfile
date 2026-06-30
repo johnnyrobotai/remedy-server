@@ -100,7 +100,7 @@ RUN mkdir -p /opt/verapdf \
     && rm -rf /tmp/verapdf
 
 # ---------------------------------------------------------------------------
-# 4. Install Node + pa11y + Lighthouse
+# 4. Install Node + pa11y + Lighthouse + ACE (DAISY accessibility checker)
 # ---------------------------------------------------------------------------
 
 FROM base AS node-tools
@@ -109,8 +109,27 @@ ARG NODE_VERSION=20.17.0
 RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
     | tar -xJf - -C /opt \
     && mv "/opt/node-v${NODE_VERSION}-linux-x64" /opt/node \
-    && /opt/node/bin/npm install -g pa11y@8 lighthouse@12 \
+    && /opt/node/bin/npm install -g pa11y@8 lighthouse@12 @daisy/ace@1.3.0 \
     && /opt/node/bin/npm cache clean --force
+
+# ---------------------------------------------------------------------------
+# 4b. Install EPUBCheck (W3C structural validator — Java)
+# ---------------------------------------------------------------------------
+
+FROM base AS epubcheck
+ARG EPUBCHECK_VERSION=5.2.1
+
+# Uses curl to fetch the GitHub release. For fully reproducible/offline
+# builds, switch to a COPY of a pre-staged epubcheck-*.zip the same way
+# the veraPDF stage does (see stage 3).
+RUN mkdir -p /opt/epubcheck \
+    && curl -fsSL -o /tmp/epubcheck.zip \
+        "https://github.com/w3c/epubcheck/releases/download/v${EPUBCHECK_VERSION}/epubcheck-${EPUBCHECK_VERSION}.zip" \
+    && unzip -q /tmp/epubcheck.zip -d /tmp/epubcheck-unpack \
+    && mv /tmp/epubcheck-unpack/epubcheck-${EPUBCHECK_VERSION}/* /opt/epubcheck/ \
+    && rm -rf /tmp/epubcheck.zip /tmp/epubcheck-unpack \
+    && printf '%s\n' '#!/bin/sh' 'exec java -jar /opt/epubcheck/epubcheck.jar "$@"' > /usr/local/bin/epubcheck \
+    && chmod +x /usr/local/bin/epubcheck
 
 # ---------------------------------------------------------------------------
 # 5. Python dependencies
@@ -147,6 +166,8 @@ FROM base AS runtime
 
 COPY --from=verapdf /opt/verapdf /opt/verapdf
 RUN ln -s /opt/verapdf/verapdf /usr/local/bin/verapdf
+COPY --from=epubcheck /opt/epubcheck /opt/epubcheck
+COPY --from=epubcheck /usr/local/bin/epubcheck /usr/local/bin/epubcheck
 COPY --from=questpdf /out/remedy-questpdf /usr/local/bin/remedy-questpdf
 COPY --from=node-tools /opt/node /opt/node
 COPY --from=python-deps /opt/venv /opt/venv
@@ -178,6 +199,8 @@ ENV JOB_DIR=/app/job_data \
     LOG_DIR=/app/state/logs \
     TMPDIR=/app/tmp \
     VERAPDF_PATH=/usr/local/bin/verapdf \
+    EPUBCHECK_PATH=/usr/local/bin/epubcheck \
+    ACE_PATH=/opt/node/bin/ace \
     REMEDY_QUESTPDF_BINARY=/usr/local/bin/remedy-questpdf \
     GHOSTSCRIPT_ENABLED=true \
     GHOSTSCRIPT_PATH=/usr/bin/gs \
@@ -189,8 +212,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "*"]
 
 # ---------------------------------------------------------------------------
-# 8. Optional slim target (no Node / Playwright — skips HTML validation
-#     and HTML→PDF conversion, ~1.2 GB smaller)
+# 8. Optional slim target (no Node / Playwright — skips HTML validation,
+#     HTML→PDF conversion, and HTML→EPUB ACE verification, ~1.2 GB smaller).
+#     EPUB conversion still produces an EPUB; verify report records that
+#     both validators were skipped (the verifier fails soft).
 # ---------------------------------------------------------------------------
 
 FROM base AS runtime-slim

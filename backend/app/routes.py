@@ -30,6 +30,7 @@ from backend.app.engine_service import (
     media_type_for,
 )
 from backend.app.jobs import (
+    JOB_KIND_CONVERT_HTML_TO_EPUB,
     JOB_KIND_CONVERT_HTML_TO_PDF,
     JOB_KIND_CONVERT_OFFICE_TO_HTML,
     JOB_KIND_CONVERT_PDF_TO_HTML,
@@ -275,6 +276,50 @@ def build_router(
         body = await _finalize_upload_and_enqueue(
             store, worker, settings, staging, ".html",
             kind=JOB_KIND_CONVERT_HTML_TO_PDF, result_media_type="application/pdf",
+        )
+        return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=body)
+
+    @router.post("/v1/convert/html-to-epub", dependencies=[require_key])
+    @upload_limit
+    async def convert_html_to_epub(
+        request: Request,
+        file: UploadFile = File(...),
+    ) -> JSONResponse:
+        """Upload an accessible HTML file → async EPUB Accessibility 1.1 conversion.
+
+        Returns 202 Accepted with the job descriptor. Poll
+        ``/v1/jobs/{job_id}`` for status; fetch the resulting EPUB via
+        ``/v1/jobs/{job_id}/result``. The EPUBCheck + ACE verify report
+        is attached to the job's ``metadata_json`` field — a clean
+        automated report is NOT by itself a conformance certificate per
+        DAISY guidance; manual SMART-style review is required.
+        """
+        suffix = Path(file.filename or "").suffix.lower()
+        if suffix not in (".html", ".htm"):
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Only .html / .htm accepted.",
+            )
+        max_bytes = settings.max_upload_mb * 1024 * 1024
+        contents = await file.read(max_bytes + 1)
+        if len(contents) > max_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=f"File exceeds max upload size ({settings.max_upload_mb} MB).",
+            )
+        if b"<html" not in contents.lower():
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="File does not appear to be HTML.",
+            )
+
+        settings.job_dir.mkdir(parents=True, exist_ok=True)
+        staging = settings.job_dir / f"_staging-{uuid.uuid4().hex}.html"
+        staging.write_bytes(contents)
+        body = await _finalize_upload_and_enqueue(
+            store, worker, settings, staging, ".html",
+            kind=JOB_KIND_CONVERT_HTML_TO_EPUB,
+            result_media_type="application/epub+zip",
         )
         return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=body)
 

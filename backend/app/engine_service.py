@@ -43,6 +43,7 @@ from project_remedy.rebuild.vision_enricher import (
 
 from backend.app.config import Settings
 from backend.app.jobs import (
+    JOB_KIND_CONVERT_HTML_TO_EPUB,
     JOB_KIND_CONVERT_HTML_TO_PDF,
     JOB_KIND_CONVERT_OFFICE_TO_HTML,
     JOB_KIND_CONVERT_PDF_TO_HTML,
@@ -120,6 +121,8 @@ async def run_job(job: Job, store: JobStore, settings: Settings) -> None:
         await _convert_office_to_html(job, store, settings)
     elif kind == JOB_KIND_CONVERT_HTML_TO_PDF:
         await _convert_html_to_pdf(job, store, settings)
+    elif kind == JOB_KIND_CONVERT_HTML_TO_EPUB:
+        await _convert_html_to_epub(job, store, settings)
     elif kind == JOB_KIND_VISION_PLAN_RUN:
         await _vision_plan_run(job, store, settings)
     else:
@@ -466,6 +469,63 @@ async def _convert_html_to_pdf(job: Job, store: JobStore, settings: Settings) ->
         progress=1.0,
         output_path=str(output_path),
         result_media_type="application/pdf",
+    )
+
+
+async def _convert_html_to_epub(job: Job, store: JobStore, settings: Settings) -> None:
+    """Convert uploaded accessible HTML into an EPUB Accessibility 1.1 package.
+
+    Runs ``HTMLToEPUBConverter`` to produce the .epub, then ``verify_epub``
+    to run EPUBCheck + ACE. The verify report is persisted as the job's
+    metadata so callers can inspect it via the report endpoint. The job
+    is marked ``done`` even when the automated verifiers report
+    violations — the verify report itself surfaces them, and per DAISY
+    a clean automated report is not by itself a conformance certificate.
+    """
+    from project_remedy.epub_verifier import verify_epub
+    from project_remedy.html_to_epub import HTMLToEPUBConverter
+
+    input_path = Path(job.input_path)
+    html_content = input_path.read_text(encoding="utf-8")
+    workdir = settings.job_dir / job.id
+    workdir.mkdir(parents=True, exist_ok=True)
+    output_path = workdir / "converted.epub"
+
+    await store.update(job.id, stage="rendering", progress=0.3)
+    converter = HTMLToEPUBConverter(max_concurrent=1)
+    await converter.start()
+    try:
+        result = await converter.convert(
+            html_content, output_path, title=input_path.stem,
+        )
+    finally:
+        await converter.close()
+
+    if not result.success:
+        await store.update(
+            job.id,
+            status="failed",
+            stage="failed",
+            progress=1.0,
+            error=f"epub_conversion_failed: {result.error_message}",
+        )
+        return
+
+    await store.update(job.id, stage="verifying", progress=0.7)
+    report = await verify_epub(output_path)
+
+    await store.update(
+        job.id,
+        status="done",
+        stage="complete",
+        progress=1.0,
+        output_path=str(output_path),
+        result_media_type="application/epub+zip",
+        metadata_json=_json.dumps({
+            "verify": report.to_dict(),
+            "features": result.accessibility_features,
+            "chapters": result.chapters,
+        }),
     )
 
 

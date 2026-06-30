@@ -36,6 +36,7 @@ JOB_KIND_REMEDIATE_OFFICE = "remediate_office"
 JOB_KIND_CONVERT_PDF_TO_HTML = "convert_pdf_to_html"
 JOB_KIND_CONVERT_OFFICE_TO_HTML = "convert_office_to_html"
 JOB_KIND_CONVERT_HTML_TO_PDF = "convert_html_to_pdf"
+JOB_KIND_CONVERT_HTML_TO_EPUB = "convert_html_to_epub"
 JOB_KIND_VISION_PLAN_RUN = "vision_plan_run"
 
 
