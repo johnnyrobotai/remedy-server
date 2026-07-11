@@ -84,6 +84,7 @@ def score_table_cell_lookup_report(
         )
 
     lookup_ready = 0
+    blank_fillable_grids = 0
     lookup_questions: list[GeneratedQuestion] = []
     serialized_tables: list[str] = []
     for table_number, table_index in enumerate(table_indices, start=1):
@@ -111,6 +112,32 @@ def score_table_cell_lookup_report(
         ):
             lookup_ready += 1
             continue
+        # Blank fillable grid: labeled headers and data-cell *nodes* present, but
+        # every data cell is empty. This is an unfilled form (rating grid, blank
+        # claim form) — structurally navigable, with no values to look up.
+        # Remediation cannot invent data the source form lacks (these tables
+        # score the same on the input), so it is not-applicable for cell lookup
+        # rather than a structural failure. The guard requires the cell nodes to
+        # be present, so a table whose cells were *dropped* by remediation
+        # (has_data_cells is False) still fails instead of being excused.
+        if (
+            has_rows
+            and has_non_empty_headers
+            and has_data_cells
+            and not has_non_empty_data_cells
+        ):
+            blank_fillable_grids += 1
+            findings.append(
+                {
+                    "severity": "info",
+                    "issue": "blank_fillable_grid",
+                    "table_index": table_number,
+                    "has_rows": has_rows,
+                    "has_non_empty_headers": has_non_empty_headers,
+                    "has_data_cells": has_data_cells,
+                }
+            )
+            continue
         findings.append(
             {
                 "severity": "error",
@@ -125,11 +152,16 @@ def score_table_cell_lookup_report(
             }
         )
 
-    structural_score = lookup_ready / len(table_indices)
+    scorable_tables = len(table_indices) - blank_fillable_grids
+    # All tables are blank fillable grids -> structure is sound, nothing to look
+    # up. Score as passing structure (consistent with the no-tables branch).
+    structural_score = 1.0 if scorable_tables <= 0 else lookup_ready / scorable_tables
     score = structural_score
     metadata: dict[str, Any] = {
         "applicable": True,
         "table_count": len(table_indices),
+        "blank_fillable_grids": blank_fillable_grids,
+        "scorable_tables": scorable_tables,
         "llm_answering_enabled": answerer is not None,
         "lookup_question_count": len(lookup_questions),
     }

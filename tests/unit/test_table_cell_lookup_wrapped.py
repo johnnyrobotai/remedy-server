@@ -83,8 +83,18 @@ def test_direct_text_cells_still_pass() -> None:
     assert result.passed is True
 
 
-def test_genuinely_empty_cells_still_fail() -> None:
-    """A blank-form table with empty data cells must not be scored as ready."""
+def test_labeled_headers_with_empty_cells_is_a_blank_grid() -> None:
+    """Labeled headers + present-but-empty data cells is an unfilled form grid.
+
+    Superseded semantics: this used to be asserted as a hard failure
+    ("genuinely empty cells still fail"). But the *input* documents score 0.0
+    the same way — remediation cannot invent data that the source form does not
+    contain, so failing table_structure here punishes remediation for the
+    document being blank rather than for a structural defect. The grid is
+    navigable (a screen reader speaks each header and each empty field), so it
+    is treated as not-applicable for cell lookup. Genuine failures — dropped
+    cells, missing headers — are covered by the tests below.
+    """
     report = _report(
         [
             _node("Table", 1),
@@ -98,10 +108,8 @@ def test_genuinely_empty_cells_still_fail() -> None:
             _node("TD", 3),  # empty cell, no descendant text
         ]
     )
-    result = score_table_cell_lookup_report(report)
-    assert result.score == 0.0
-    assert result.passed is False
-    finding = result.findings[0]
-    assert finding["issue"] == "table_not_lookup_ready"
-    assert finding["has_non_empty_headers"] is True
-    assert finding["has_non_empty_data_cells"] is False
+    result = score_table_cell_lookup_report(report, threshold=0.75)
+    assert result.metadata["blank_fillable_grids"] == 1
+    assert result.score == 1.0
+    assert result.passed is True
+    assert any(f["issue"] == "blank_fillable_grid" for f in result.findings)
