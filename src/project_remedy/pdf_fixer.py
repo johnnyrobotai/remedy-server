@@ -11036,13 +11036,42 @@ def fix_heading_hierarchy_quality(
         # for 0). Our page sets are 0-based; convert at the boundary or the
         # model analyzes the WRONG pages without structure context, and
         # issue.page then round-trips back through the -1 below.
-        result = _run_async_callable_blocking(
-            analyzer.analyze_heading_hierarchy,
-            pdf_path,
-            pages=[p + 1 for p in pages],
-        )
-        if result is None:
-            return []
+        pages_1based = [p + 1 for p in pages]
+        try:
+            vote_rounds = int(os.environ.get("PDF_HEADING_VOTE_ROUNDS", "1") or "1")
+        except ValueError:
+            vote_rounds = 1
+        if vote_rounds > 1:
+            # Consensus voting: the heading adapter is the weakest of the five
+            # and doubles as detector + verifier, so a single pass flags
+            # different headings run-to-run. Run it several times and apply only
+            # the retags a majority of runs agree on (PDF_HEADING_VOTE_THRESHOLD,
+            # default = strict majority). Default rounds=1 preserves behavior.
+            from project_remedy.heading_feedback import consensus_heading_issues
+            try:
+                vote_threshold = int(os.environ.get(
+                    "PDF_HEADING_VOTE_THRESHOLD", str(vote_rounds // 2 + 1)))
+            except ValueError:
+                vote_threshold = vote_rounds // 2 + 1
+            runs: list[list] = []
+            result = None
+            for _ in range(vote_rounds):
+                one = _run_async_callable_blocking(
+                    analyzer.analyze_heading_hierarchy, pdf_path, pages=pages_1based)
+                if one is not None:
+                    result = one
+                    runs.append(list(getattr(one, "heading_issues", []) or []))
+                else:
+                    runs.append([])
+            if result is None:
+                return []
+            result.heading_issues = consensus_heading_issues(
+                runs, threshold=vote_threshold)
+        else:
+            result = _run_async_callable_blocking(
+                analyzer.analyze_heading_hierarchy, pdf_path, pages=pages_1based)
+            if result is None:
+                return []
 
     retagged = 0
     created_from_findings = 0
