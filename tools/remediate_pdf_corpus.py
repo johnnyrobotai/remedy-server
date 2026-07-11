@@ -29,6 +29,7 @@ from project_remedy.levels import (
     select_shard,
     summarize_levels,
 )
+from project_remedy.heading_feedback import apply_prominence_heading_rescue
 from project_remedy.pdf_acceptance import evaluate_pdf_acceptance
 from project_remedy.pdf_fixer import (
     apply_heading_retag_refix,
@@ -440,21 +441,31 @@ def run(args: argparse.Namespace) -> int:
                     getattr(acceptance, "checker_failures", None) or []
                 )
                 if retag_pages:
+                    retag_changes = []
                     provider = create_provider_from_config(acceptance_config)
                     if provider is not None:
                         print(
                             f"    stage=heading-retag pages={[p + 1 for p in retag_pages]}",
                             flush=True,
                         )
-                        retag_changes = apply_heading_retag_refix(
+                        retag_changes.extend(apply_heading_retag_refix(
                             output,
                             vision_provider=provider,
                             checker_failures=acceptance.checker_failures,
-                        )
-                        fix_changes.extend(retag_changes)
-                        if retag_changes:
-                            print("    stage=reacceptance(heading-retag)", flush=True)
-                            acceptance, clean = _evaluate(source, output, acceptance_config)
+                        ))
+                    # Vision-free level rescue on the same flagged pages: the
+                    # heading adapter is worst at *which* H-level, so assign it
+                    # deterministically from font-size prominence (guard-gated,
+                    # so table cells / image figures are never promoted). Runs
+                    # even when no vision provider is configured.
+                    print("    stage=heading-prominence-rescue", flush=True)
+                    retag_changes.extend(
+                        apply_prominence_heading_rescue(output, retag_pages)
+                    )
+                    fix_changes.extend(retag_changes)
+                    if retag_changes:
+                        print("    stage=reacceptance(heading-retag)", flush=True)
+                        acceptance, clean = _evaluate(source, output, acceptance_config)
 
             if not clean and not args.audit_only:
                 residue = (
