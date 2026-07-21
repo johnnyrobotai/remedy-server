@@ -115,17 +115,56 @@ def _spans(pdf):
 
 
 def test_prune_preserves_blank_grid_cells():
-    """A blank cell holds a column position; pruning it corrupts the grid."""
+    """A blank cell holds a column position; pruning it corrupts the grid.
+
+    Counts TD+TH, not TD alone: the pass also runs header repair, which legitimately
+    promotes the first row to /TH. The invariant is that no cell is LOST.
+    """
     # Row 1 is entirely blank -- the calendar week with no events.
     blanks = {(1, 0), (1, 1), (1, 2), (1, 3), (2, 2)}
     pdf = _grid_pdf(3, 4, blanks)
-    assert _count(pdf, "/TD") == 12
+    assert _count(pdf, "/TD") + _count(pdf, "/TH") == 12
 
     PF._prune_dead_and_empty_nodes(pdf)
 
-    assert _count(pdf, "/TD") == 12, (
+    assert _count(pdf, "/TD") + _count(pdf, "/TH") == 12, (
         "pruning deleted blank grid cells; every cell to their right now shifts "
         "column, corrupting the row/column correspondence"
+    )
+
+
+def test_cell_less_row_is_still_pruned():
+    """An empty ROW is not positional the way an empty CELL is.
+
+    A cell's position is its index among its row's siblings, so deleting one shifts
+    every cell to its right. A /TR holding no cells defines no positions at all --
+    removing it shifts nothing, and KEEPING it guarantees veraPDF 7.2-42, because a
+    zero-width row can never match the table's column count.
+
+    Real case: "collection Activity Forms-Fundraising act CASH BOX control 2015.pdf"
+    has 57 source rows of which 12 are cell-less. Protecting those rows left widths
+    {0: 12, 6: 47} and failed 7.2 testNumber 42.
+    """
+    pdf = _grid_pdf(2, 3, blank_cells=set())
+    # Append a third row carrying no cells at all.
+    pg = pdf.pages[0].obj
+    tbody = None
+    for obj in pdf.objects:
+        if isinstance(obj, pikepdf.Dictionary) and str(obj.get("/S")) == "/TBody":
+            tbody = obj
+            break
+    empty_tr = pdf.make_indirect(Dictionary(
+        Type=Name("/StructElem"), S=Name("/TR"), Pg=pg, K=Array([])))
+    empty_tr.P = tbody
+    tbody.K = Array(list(tbody.K) + [empty_tr])
+    # Count rows in the TREE, not pdf.objects: a node detached from its parent
+    # lingers as an orphaned object, so an object census cannot see the removal.
+    assert len(list(tbody.K)) == 3
+
+    PF._prune_dead_and_empty_nodes(pdf)
+
+    assert len(list(tbody.K)) == 2, (
+        "the cell-less row survived; it can never match the table's column count"
     )
 
 

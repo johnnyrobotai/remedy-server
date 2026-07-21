@@ -18715,7 +18715,12 @@ _CASCADE_CONTAINER_TYPES = {"Sect", "Div", "NonStruct", "Part", "Art", "BlockQuo
 # Grid types that are POSITIONAL: a blank cell holds a column coordinate, so it is
 # structurally live even when it carries no content. Deleting one shifts every cell
 # to its right and corrupts the row/column correspondence a screen reader announces.
-_TABLE_GRID_TYPES = {"TD", "TH", "TR"}
+#
+# CELLS ONLY -- deliberately not /TR. A cell's position is its index among its row's
+# siblings, so removing one shifts the rest; a row holding no cells defines no
+# positions, so removing it shifts nothing. Keeping cell-less rows guarantees
+# veraPDF 7.2-42, since a zero-width row can never match the column count.
+_TABLE_GRID_TYPES = {"TD", "TH"}
 
 
 def _cascade_prune_empty_containers(pdf: pikepdf.Pdf) -> int:
@@ -18863,6 +18868,7 @@ def _prune_dead_and_empty_nodes(pdf: pikepdf.Pdf) -> int:
 
     total_removed = 0
     pruned_table_nodes = False
+    preserved_table_grid = False
 
     max_passes = 1 if large_document else 10
     for _pass in range(max_passes):
@@ -18877,6 +18883,11 @@ def _prune_dead_and_empty_nodes(pdf: pikepdf.Pdf) -> int:
             # rows short, which is what drove the compensating /ColSpan fabrication
             # below (and, before the 2d01a8b clamp, the runaway to 7,208,595).
             if _get_struct_type(node) in _TABLE_GRID_TYPES:
+                # Preserving the cell must not also suppress the repair below. A
+                # table that is ragged in the SOURCE still needs regularising for
+                # 7.2-42/43, and that repair used to be reached only by way of
+                # deleting a cell first.
+                preserved_table_grid = True
                 continue
 
             if str(node.get("/ID", "") or "").startswith("remedy-visible-text-"):
@@ -18935,7 +18946,7 @@ def _prune_dead_and_empty_nodes(pdf: pikepdf.Pdf) -> int:
     # leave rows with unequal column counts (veraPDF 7.2-42/43), so regularity
     # must be re-enforced here — not just header repair — or the pruned tables
     # ship irregular.
-    if pruned_table_nodes:
+    if pruned_table_nodes or preserved_table_grid:
         fix_table_regularity(pdf)
         fix_table_headers(pdf)
         fix_table_header_scope(pdf)

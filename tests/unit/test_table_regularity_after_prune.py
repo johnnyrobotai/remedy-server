@@ -108,6 +108,56 @@ def test_table_stays_regular_after_pruning():
     )
 
 
+def _irregular_table_pdf():
+    """Row 0 has 3 cells, row 1 has 2 (one dead) -- irregular in the SOURCE.
+
+    Unlike the calendars (a perfect 39x33 grid), this table is genuinely ragged, so
+    preserving the dead cell is not by itself enough to satisfy 7.2-42/43. The
+    regularity repair must still run. Modelled on the real corpus file
+    "collection Activity Forms-Fundraising act CASH BOX control 2015.pdf", which
+    regressed to veraPDF 7.2 when the guard suppressed that repair.
+    """
+    pdf = pikepdf.Pdf.new()
+    pdf.add_blank_page(page_size=(612, 792))
+    pg = pdf.pages[0].obj
+    pg.Contents = pdf.make_stream(CONTENT)
+
+    def td(mcid):
+        return pdf.make_indirect(Dictionary(
+            Type=Name("/StructElem"), S=Name("/TD"), Pg=pg, K=mcid))
+
+    tr1_cells = [td(0), td(1), td(2)]
+    tr2_cells = [td(3), td(4)]  # MCIDs 3 and 4 are absent -> dead
+    tr1 = pdf.make_indirect(Dictionary(Type=Name("/StructElem"), S=Name("/TR"),
+                                       Pg=pg, K=Array(tr1_cells)))
+    tr2 = pdf.make_indirect(Dictionary(Type=Name("/StructElem"), S=Name("/TR"),
+                                       Pg=pg, K=Array(tr2_cells)))
+    for c in tr1_cells: c.P = tr1
+    for c in tr2_cells: c.P = tr2
+    table = pdf.make_indirect(Dictionary(Type=Name("/StructElem"), S=Name("/Table"),
+                                         Pg=pg, K=Array([tr1, tr2])))
+    tr1.P = table; tr2.P = table
+    doc = pdf.make_indirect(Dictionary(Type=Name("/StructElem"), S=Name("/Document"),
+                                       K=Array([table])))
+    table.P = doc
+    pdf.Root.StructTreeRoot = pdf.make_indirect(
+        Dictionary(Type=Name("/StructTreeRoot"), K=Array([doc])))
+    pdf.Root.MarkInfo = Dictionary(Marked=True)
+    return pdf, table
+
+
+def test_source_irregular_table_is_still_regularised():
+    """Preserving cells must not suppress the repair a ragged table still needs."""
+    pdf, table = _irregular_table_pdf()
+    assert _row_widths(table) == [3, 2]  # sanity: ragged before
+
+    PF._prune_dead_and_empty_nodes(pdf)
+
+    assert len(set(_row_widths(table))) == 1, (
+        f"ragged table left irregular (veraPDF 7.2-42/43): {_row_widths(table)}"
+    )
+
+
 def test_dead_cell_is_preserved_rather_than_pruned_and_padded():
     """A dangling cell holds a column position; keep it instead of inventing a span.
 
