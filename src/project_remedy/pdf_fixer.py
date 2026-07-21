@@ -18712,6 +18712,11 @@ def _artifact_orphan_whitespace_mcids(pdf: pikepdf.Pdf) -> int:
 
 _CASCADE_CONTAINER_TYPES = {"Sect", "Div", "NonStruct", "Part", "Art", "BlockQuote"}
 
+# Grid types that are POSITIONAL: a blank cell holds a column coordinate, so it is
+# structurally live even when it carries no content. Deleting one shifts every cell
+# to its right and corrupts the row/column correspondence a screen reader announces.
+_TABLE_GRID_TYPES = {"TD", "TH", "TR"}
+
 
 def _cascade_prune_empty_containers(pdf: pikepdf.Pdf) -> int:
     """Remove container nodes (Sect, Div, NonStruct, etc.) that have no children.
@@ -18865,6 +18870,13 @@ def _prune_dead_and_empty_nodes(pdf: pikepdf.Pdf) -> int:
 
         for node, _depth, parent in walk_structure_tree(pdf):
             if parent is None:
+                continue
+
+            # An empty grid cell is meaningful by position, not by content. The
+            # calendars are 39x33 with most days blank; pruning those cells left
+            # rows short, which is what drove the compensating /ColSpan fabrication
+            # below (and, before the 2d01a8b clamp, the runaway to 7,208,595).
+            if _get_struct_type(node) in _TABLE_GRID_TYPES:
                 continue
 
             if str(node.get("/ID", "") or "").startswith("remedy-visible-text-"):

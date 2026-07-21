@@ -2,10 +2,26 @@
 
 Pruning dead/empty table cells (dangling MCRs) leaves rows with unequal column
 counts, which veraPDF flags as 7.2-42/43 ("Table rows shall have the same number
-of columns"). The pruner already reruns header/scope repair when it removes table
-nodes; it must also re-enforce row regularity, or the pruned tables ship
-irregular. This introduced 7.2-42/43 on delivered ISS reports / catalog addenda
+of columns"). This introduced 7.2-42/43 on delivered ISS reports / catalog addenda
 whose tables were otherwise fully content-recovered.
+
+The INVARIANT above is still the contract. What changed is how it is satisfied.
+
+Originally the pruner deleted the dead cell and then called `fix_table_regularity`
+to rebuild the width it had just destroyed -- which padded the short row with a
+FABRICATED /ColSpan. That workaround was the origin of the runaway span: on the
+39x33 LAMC calendars it manufactured spans on a table whose source has none, and
+before the 2d01a8b clamp it ratcheted to /ColSpan 7,208,595 in a delivered file.
+
+A table cell is POSITIONAL -- a blank or dangling cell still holds a column
+coordinate -- so `_TABLE_GRID_TYPES` is now exempt from pruning. The row never
+becomes short, so nothing needs re-widening and no span is invented. The end state
+is a genuine 2x2 grid instead of one cell claiming to span two columns.
+
+Verified on the real files: source SEP-08/MAY-08 re-remediate to TD=1254 + TH=33
+(= the source's 1287 cells exactly), 39 rows, zero /ColSpan, and both PASS
+`verapdf -f ua1` with no failed clauses -- including no 7.2-42/43 and nothing
+raised by the retained dangling MCR.
 """
 from __future__ import annotations
 
@@ -63,23 +79,51 @@ def _table_cells(table):
     )
 
 
-def test_pruning_table_cell_reenforces_regularity(monkeypatch):
+def _row_widths(table):
+    """Column count per row, counting each cell's /ColSpan."""
+    widths = []
+    for tr in table.K:
+        w = 0
+        for c in tr.K:
+            if isinstance(c, pikepdf.Dictionary) and str(c.get("/S")) in ("/TD", "/TH"):
+                span = c.get("/ColSpan")
+                attrs = c.get("/A")
+                if span is None and isinstance(attrs, pikepdf.Dictionary):
+                    span = attrs.get("/ColSpan")
+                w += int(span) if span is not None else 1
+        widths.append(w)
+    return widths
+
+
+def test_table_stays_regular_after_pruning():
+    """The 7.2-42/43 invariant: every row ends the same width."""
     pdf, table = _table_pdf()
-    assert _table_cells(table) == 4  # sanity: the table starts with 4 cells
-
-    calls = []
-    real = PF.fix_table_regularity
-
-    def spy(p, **k):
-        calls.append(True)
-        return real(p, **k)
-
-    monkeypatch.setattr(PF, "fix_table_regularity", spy)
+    assert _row_widths(table) == [2, 2]  # sanity: starts as a regular 2x2
 
     PF._prune_dead_and_empty_nodes(pdf)
 
-    # A table cell was pruned (dead MCR), which can leave rows with unequal
-    # column counts (veraPDF 7.2-42/43). The pruner must re-enforce row
-    # regularity — not just header/scope repair — after removing table nodes.
-    assert calls, "table-cell pruning did not re-run fix_table_regularity"
-    assert _table_cells(table) < 4, "expected the dead table cell to be pruned"
+    assert len(set(_row_widths(table))) == 1, (
+        f"rows ended with unequal column counts (veraPDF 7.2-42/43): "
+        f"{_row_widths(table)}"
+    )
+
+
+def test_dead_cell_is_preserved_rather_than_pruned_and_padded():
+    """A dangling cell holds a column position; keep it instead of inventing a span.
+
+    The old behaviour deleted this cell and re-widened the row with a fabricated
+    /ColSpan. Both halves of that trade are wrong: the grid loses a coordinate and
+    the surviving cell lies about its width.
+    """
+    pdf, table = _table_pdf()
+
+    PF._prune_dead_and_empty_nodes(pdf)
+
+    assert _table_cells(table) == 4, "the positional grid cell was pruned"
+    spans = [
+        int(c.get("/ColSpan"))
+        for tr in table.K
+        for c in tr.K
+        if isinstance(c, pikepdf.Dictionary) and c.get("/ColSpan") is not None
+    ]
+    assert spans == [], f"a /ColSpan was fabricated to hide the deletion: {spans}"
