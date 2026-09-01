@@ -26,6 +26,10 @@ from project_remedy.pdf_semantics import (
     document_has_bookmarks,
     document_requires_bookmarks,
     find_node_page,
+    get_direct_mcid_refs,
+    get_mcid_marked_content_tags,
+    get_mcid_xobject_names,
+    get_parent_tree_owner,
     get_rendered_multimedia_names,
     node_has_annotation_ref,
     node_has_content_association,
@@ -3363,6 +3367,8 @@ class PDFAccessibilityChecker:
             except Exception:
                 pass
         page_mcid_texts: dict[int, dict[int, str]] = {}
+        page_mcid_tags: dict[int, dict[int, list[str]]] = {}
+        page_mcid_xobjects: dict[int, dict[int, list[str]]] = {}
 
         # Standard text-conveying types that do not require /Alt.
         _TEXT_TYPES = {
@@ -3377,11 +3383,59 @@ class PDFAccessibilityChecker:
             "NonStruct",
         }
 
-        for node, _depth, _parent in self._walk_structure_tree(pdf):
+        for node, _depth, parent in self._walk_structure_tree(pdf):
             if not _node_has_direct_content(node):
                 continue
 
             stype = _get_struct_type(node)
+            image_refs: list[tuple[int, int, list[str]]] = []
+            for page_num, mcid in get_direct_mcid_refs(node, pdf):
+                if page_num not in page_mcid_xobjects:
+                    page_mcid_xobjects[page_num] = get_mcid_xobject_names(
+                        pdf.pages[page_num]
+                    )
+                names = page_mcid_xobjects[page_num].get(mcid, [])
+                if names:
+                    image_refs.append((page_num, mcid, names))
+
+            if stype == "Figure" and image_refs:
+                for page_num, mcid, _names in image_refs:
+                    owner = get_parent_tree_owner(pdf, page_num, mcid)
+                    if owner is None or owner.objgen != node.objgen:
+                        owner_type = _get_struct_type(owner) if owner is not None else "missing"
+                        missing.append(
+                            f"page {page_num + 1}: Figure image MCID {mcid} "
+                            f"ParentTree owner is /{owner_type}, not the Figure"
+                        )
+                    if page_num not in page_mcid_tags:
+                        page_mcid_tags[page_num] = get_mcid_marked_content_tags(
+                            pdf.pages[page_num]
+                        )
+                    tags = page_mcid_tags[page_num].get(mcid, [])
+                    if "Figure" not in tags:
+                        shown = f"/{tags[0]}" if tags else "missing"
+                        missing.append(
+                            f"page {page_num + 1}: Figure image MCID {mcid} uses "
+                            f"marked-content tag {shown}, not /Figure"
+                        )
+                parent_type = _get_struct_type(parent) if parent is not None else ""
+                if re.fullmatch(r"H[1-6]?", parent_type):
+                    first_page = image_refs[0][0] + 1
+                    missing.append(
+                        f"page {first_page}: Figure is nested inside /{parent_type}; "
+                        "move it beside the heading"
+                    )
+
+            if image_refs and (
+                stype in _TEXT_TYPES or _structure_type_looks_textual(stype)
+            ):
+                for page_num, mcid, names in image_refs:
+                    missing.append(
+                        f"page {page_num + 1}: /{stype} directly owns image MCID "
+                        f"{mcid} ({', '.join(names)}); move it to a Figure"
+                    )
+                continue
+
             if stype in _TEXT_TYPES or _structure_type_looks_textual(stype):
                 continue
             page_num = self._resolve_node_page(node, page_index)

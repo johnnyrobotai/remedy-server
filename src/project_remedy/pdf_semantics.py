@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -69,6 +70,172 @@ def iter_resolved_kids(node: pikepdf.Dictionary) -> Iterator[object]:
             yield resolve_pdf_object(kids[idx])
     else:
         yield resolve_pdf_object(kids)
+
+
+def get_direct_mcid_refs(
+    node: pikepdf.Dictionary,
+    pdf: pikepdf.Pdf,
+) -> list[tuple[int, int]]:
+    """Return ``(page_index, mcid)`` pairs directly owned by *node*.
+
+    A structure element can span pages. Integer ``/K`` entries inherit the
+    element's page, while MCR dictionaries can name a different page through
+    ``/Pg``. Child structure elements are intentionally excluded: their MCIDs
+    belong to the child, not the container.
+    """
+    default_page = find_node_page(node, pdf)
+    refs: list[tuple[int, int]] = []
+
+    for child in iter_resolved_kids(node):
+        if isinstance(child, pikepdf.Dictionary):
+            if "/S" in child or "/MCID" not in child:
+                continue
+            page_idx = default_page
+            if child.get("/Pg") is not None:
+                page_idx = get_page_index_from_ref(pdf, child["/Pg"])
+            if page_idx is None:
+                continue
+            try:
+                refs.append((page_idx, int(child["/MCID"])))
+            except Exception:
+                continue
+            continue
+
+        if default_page is None:
+            continue
+        try:
+            refs.append((default_page, int(child)))
+        except Exception:
+            continue
+
+    return refs
+
+
+_XOBJECT_DO_RE = re.compile(rb"/([A-Za-z][\w]*)\s+Do\b")
+
+
+def _read_page_content_bytes(page: pikepdf.Page) -> bytes | None:
+    content = page.get("/Contents")
+    if content is None:
+        return None
+    try:
+        if isinstance(content, pikepdf.Array):
+            chunks = []
+            for ref in content:
+                obj = ref.get_object() if hasattr(ref, "get_object") else ref
+                chunks.append(
+                    obj.read_bytes() if hasattr(obj, "read_bytes") else bytes(obj)
+                )
+            return b"\n".join(chunks)
+        else:
+            obj = content.get_object() if hasattr(content, "get_object") else content
+            return obj.read_bytes() if hasattr(obj, "read_bytes") else bytes(obj)
+    except Exception:
+        return None
+
+
+def get_mcid_marked_content_tags(page: pikepdf.Page) -> dict[int, list[str]]:
+    """Map MCIDs to the raw marked-content tag names used in page streams."""
+    raw = _read_page_content_bytes(page)
+    if raw is None:
+        return {}
+    pattern = re.compile(
+        rb"/(?P<tag>[A-Za-z][\w]*)\s*<<[^>]*?/MCID\s+(?P<mcid>\d+)[^>]*?>>\s*BDC"
+    )
+    result: dict[int, list[str]] = {}
+    for match in pattern.finditer(raw):
+        mcid = int(match.group("mcid"))
+        result.setdefault(mcid, []).append(match.group("tag").decode("latin-1"))
+    return result
+
+
+def get_mcid_xobject_names(page: pikepdf.Page) -> dict[int, list[str]]:
+    """Map each marked-content MCID to XObjects invoked inside its scope."""
+    raw = _read_page_content_bytes(page)
+    if raw is None:
+        return {}
+
+    mcid_re = re.compile(
+        rb"/(?P<tag>[A-Za-z][\w]*)\s*<<[^>]*?/MCID\s+(?P<mcid>\d+)[^>]*?>>\s*BDC"
+    )
+    emc_re = re.compile(rb"\bEMC\b")
+    open_bdc_re = re.compile(rb"\bBDC\b")
+
+    result: dict[int, list[str]] = {}
+    stack: list[tuple[int | None, int]] = []
+    pos = 0
+    while pos < len(raw):
+        m_mcid = mcid_re.search(raw, pos)
+        m_bdc = open_bdc_re.search(raw, pos)
+        m_emc = emc_re.search(raw, pos)
+        candidates = [match for match in (m_mcid, m_bdc, m_emc) if match is not None]
+        if not candidates:
+            break
+        nxt = min(candidates, key=lambda match: match.start())
+        if nxt is m_mcid:
+            stack.append((int(m_mcid.group("mcid")), m_mcid.end()))
+            pos = m_mcid.end()
+        elif nxt is m_emc:
+            scope_mcid, scope_start = stack.pop() if stack else (None, pos)
+            if scope_mcid is not None:
+                names = [
+                    name.decode("latin-1")
+                    for name in _XOBJECT_DO_RE.findall(raw, scope_start, m_emc.start())
+                ]
+                if names:
+                    result.setdefault(scope_mcid, []).extend(names)
+            pos = m_emc.end()
+        else:
+            stack.append((None, m_bdc.end()))
+            pos = m_bdc.end()
+
+    return result
+
+
+def get_parent_tree_owner(
+    pdf: pikepdf.Pdf,
+    page_index: int,
+    mcid: int,
+) -> pikepdf.Dictionary | None:
+    """Return the StructElem that the page ParentTree assigns to *mcid*."""
+    if page_index < 0 or page_index >= len(pdf.pages):
+        return None
+    struct_root = resolve_pdf_object(pdf.Root.get("/StructTreeRoot"))
+    if not isinstance(struct_root, pikepdf.Dictionary):
+        return None
+    parent_tree = resolve_pdf_object(struct_root.get("/ParentTree"))
+    if not isinstance(parent_tree, pikepdf.Dictionary):
+        return None
+    struct_parents = pdf.pages[page_index].get("/StructParents")
+    if struct_parents is None:
+        return None
+    try:
+        target = int(struct_parents)
+    except Exception:
+        return None
+
+    stack = [parent_tree]
+    while stack:
+        node = resolve_pdf_object(stack.pop())
+        if not isinstance(node, pikepdf.Dictionary):
+            continue
+        nums = node.get("/Nums")
+        if isinstance(nums, pikepdf.Array):
+            for idx in range(0, len(nums) - 1, 2):
+                try:
+                    if int(nums[idx]) != target:
+                        continue
+                except Exception:
+                    continue
+                owners = resolve_pdf_object(nums[idx + 1])
+                if not isinstance(owners, pikepdf.Array) or mcid >= len(owners):
+                    return None
+                owner = resolve_pdf_object(owners[mcid])
+                return owner if isinstance(owner, pikepdf.Dictionary) else None
+        kids = node.get("/Kids")
+        if isinstance(kids, pikepdf.Array):
+            stack.extend(kids)
+    return None
 
 
 def node_has_struct_children(node: pikepdf.Dictionary) -> bool:

@@ -57,6 +57,10 @@ from project_remedy.pdf_semantics import (
     document_has_bookmarks,
     document_requires_bookmarks,
     find_node_page as _shared_find_node_page,
+    get_direct_mcid_refs,
+    get_mcid_marked_content_tags,
+    get_mcid_xobject_names,
+    get_parent_tree_owner,
     get_page_index_from_ref,
     get_rendered_image_names,
     get_rendered_multimedia_names,
@@ -5150,6 +5154,8 @@ def fix_alt_text_elements(pdf: pikepdf.Pdf) -> list[str]:
 
     for node, _depth, _parent in walk_structure_tree(pdf):
         stype = _get_struct_type(node)
+        if stype == "Figure":
+            continue
         alt = node.get("/Alt")
         node_text = _direct_node_text(node)
         if (
@@ -5194,6 +5200,8 @@ def fix_alt_text_elements(pdf: pikepdf.Pdf) -> list[str]:
     # nodes that our first-pass textual heuristics omit (including non-leaf nodes
     # with direct content and generic placeholder text).
     for node, _depth, _parent in walk_structure_tree(pdf):
+        if _get_struct_type(node) == "Figure":
+            continue
         alt = node.get("/Alt")
         if alt is not None and not _is_generic_alt_text(str(alt).strip()):
             continue
@@ -5252,81 +5260,48 @@ def fix_alt_text_elements(pdf: pikepdf.Pdf) -> list[str]:
     return changes
 
 
-_XOBJ_DO_RE = re.compile(rb"/([A-Za-z][\w]*)\s+Do\b")
-
-
 def _page_mcid_has_xobject_do(page) -> dict[int, list[str]]:
-    """Return ``{mcid: [xobject_name, ...]}`` for every MCID whose marked-content
-    range invokes an XObject via the ``Do`` operator.
+    """Backward-compatible wrapper for the shared MCID/XObject parser."""
+    return get_mcid_xobject_names(page)
 
-    Form and Image XObjects drawn via ``Do`` are non-text content. Adobe's
-    "Other elements alternate text" rule requires the structure element that
-    owns the enclosing MCID to carry /Alt. We can't read the content stream
-    with :class:`fitz` because mupdf normalises the stream, so we walk the raw
-    pikepdf bytes and pair each BDC/EMC scope with the Do operators inside it.
-    """
-    content = page.get("/Contents")
-    if content is None:
-        return {}
-    try:
-        if isinstance(content, pikepdf.Array):
-            chunks = []
-            for ref in content:
-                obj = ref.get_object() if hasattr(ref, "get_object") else ref
-                chunks.append(obj.read_bytes() if hasattr(obj, "read_bytes") else bytes(obj))
-            raw = b"\n".join(chunks)
-        else:
-            obj = content.get_object() if hasattr(content, "get_object") else content
-            raw = obj.read_bytes() if hasattr(obj, "read_bytes") else bytes(obj)
-    except Exception:
-        return {}
 
-    mcid_re = re.compile(
-        rb"/(?P<tag>[A-Za-z][\w]*)\s*<<[^>]*?/MCID\s+(?P<mcid>\d+)[^>]*?>>\s*BDC"
+def _align_mcid_marked_content_tag(
+    pdf: pikepdf.Pdf,
+    *,
+    page_idx: int,
+    mcid: int,
+    tag: str,
+) -> bool:
+    page = pdf.pages[page_idx]
+    if tag in get_mcid_marked_content_tags(page).get(mcid, []):
+        return False
+    contents = page.get("/Contents")
+    if contents is None:
+        return False
+    streams = list(contents) if isinstance(contents, pikepdf.Array) else [contents]
+    pattern = re.compile(
+        rb"/[A-Za-z][\w]*\s*(?P<props><<[^>]*?/MCID\s+"
+        + str(mcid).encode("ascii")
+        + rb"\b[^>]*>>)\s*BDC"
     )
-    emc_re = re.compile(rb"\bEMC\b")
-    open_bdc_re = re.compile(rb"\bBDC\b")  # any other BDC (no MCID dict)
-
-    result: dict[int, list[str]] = {}
-    stack: list[int | None] = []
-    pos = 0
-    while pos < len(raw):
-        m_mcid = mcid_re.search(raw, pos)
-        m_bdc = open_bdc_re.search(raw, pos)
-        m_emc = emc_re.search(raw, pos)
-        # pick the earliest event
-        candidates = [c for c in (m_mcid, m_bdc, m_emc) if c is not None]
-        if not candidates:
-            break
-        nxt = min(candidates, key=lambda x: x.start())
-        if nxt is m_mcid:
-            start = m_mcid.end()
-            mcid = int(m_mcid.group("mcid"))
-            stack.append(mcid)
-            pos = start
-        elif nxt is m_emc:
-            scope_end = m_emc.start()
-            if stack:
-                scope_mcid = stack.pop()
-            else:
-                scope_mcid = None
-            # scan inside this BDC..EMC range for Do operators
-            # Use the most recently opened scope's start; recompute by scanning back
-            # only the segment from current pos to scope_end.
-            segment_end = scope_end
-            # find the matching BDC start: simplest is to scan from pos backward, but
-            # we don't track start positions. Approximate by scanning the segment from
-            # the prior cursor; we accept that nested same-MCID scopes will pool ops.
-            segment_start = pos
-            do_names = [n.decode("latin-1") for n in _XOBJ_DO_RE.findall(raw, segment_start, segment_end)]
-            if do_names and scope_mcid is not None:
-                result.setdefault(scope_mcid, []).extend(do_names)
-            pos = m_emc.end()
+    for index, stream_ref in enumerate(streams):
+        stream = _resolve_pdf_object(stream_ref)
+        if not isinstance(stream, pikepdf.Stream):
+            continue
+        rewritten, count = pattern.subn(
+            f"/{tag} ".encode("ascii") + rb"\g<props> BDC",
+            stream.read_bytes(),
+            count=1,
+        )
+        if not count:
+            continue
+        replacement = pdf.make_stream(rewritten)
+        if isinstance(contents, pikepdf.Array):
+            contents[index] = replacement
         else:
-            # plain BDC (no /MCID): push None
-            stack.append(None)
-            pos = m_bdc.end()
-    return result
+            page["/Contents"] = replacement
+        return True
+    return False
 
 
 def fix_image_struct_elems_retag(pdf: pikepdf.Pdf) -> list[str]:
@@ -5425,6 +5400,13 @@ def fix_image_struct_elems_retag(pdf: pikepdf.Pdf) -> list[str]:
             continue
 
         node["/S"] = pikepdf.Name("/Figure")
+        for mcid in image_mcids:
+            _align_mcid_marked_content_tag(
+                pdf,
+                page_idx=page_idx,
+                mcid=mcid,
+                tag="Figure",
+            )
         # Strip role-specific attributes that don't belong on /Figure.
         if "/ActualText" in node:
             # /ActualText belongs on text spans, not figures. Drop it so
@@ -5964,32 +5946,228 @@ def fix_substantive_artifact_images(
 
 
 def fix_xobject_bearing_text_elements(pdf: pikepdf.Pdf) -> list[str]:
-    """Add /Alt to text-typed structure nodes that own image content.
+    """Move duplicate image MCIDs to Figures, then handle unresolved owners.
 
     PDF/UA's "Other elements alternate text" rule applies to any element that
     delivers non-text content via the ``Do`` operator on a Form or Image
     XObject. When a producer (or an earlier fix pass) ends up wrapping the
-    page's title, body text *and* a photograph under a single /H1 or /P, the
-    element is now a mixed-content node that Adobe Acrobat will flag because
-    the image inside it has no alt-equivalent. Splitting the marked content
-    is the architecturally correct fix; until that work lands we add an /Alt
-    to the owning element so the AT layer at least announces "image content"
-    instead of silently ignoring it.
+    page's body text *and* a photograph under a single /P while an existing
+    /Figure references the same MCID, Acrobat follows the ParentTree owner and
+    flags the paragraph. Reassign that direct MCID to the already-described
+    Figure and remove only the paragraph's duplicate MCR. This preserves every
+    other paragraph MCID and avoids an /Alt on a text container, which would
+    hide its real text from assistive technology.
 
     ``fix_image_struct_elems_retag`` handles the pure-image case (no text
     MCIDs) by retagging /S to /Figure so the downstream alt-text fix can
-    generate a real description. This function is the fallback for the
-    mixed-content case where retagging would violate PDF/UA-1.
+    generate a real description. If no unique existing Figure can own an image
+    MCID, retain the legacy placeholder fallback for compatibility.
     """
     struct_root = pdf.Root.get("/StructTreeRoot")
     if struct_root is None:
         return []
 
-    page_index: dict[tuple, int] = {}
-    for idx, page in enumerate(pdf.pages):
-        page_index[page.obj.objgen] = idx
-
     page_xobj_mcids: dict[int, dict[int, list[str]]] = {}
+
+    def xobjects_for(page_idx: int, mcid: int) -> list[str]:
+        if page_idx not in page_xobj_mcids:
+            page_xobj_mcids[page_idx] = get_mcid_xobject_names(pdf.pages[page_idx])
+        return page_xobj_mcids[page_idx].get(mcid, [])
+
+    def align_figure_marked_content(page_idx: int, mcid: int) -> bool:
+        return _align_mcid_marked_content_tag(
+            pdf,
+            page_idx=page_idx,
+            mcid=mcid,
+            tag="Figure",
+        )
+
+    structure_nodes = list(walk_structure_tree(pdf))
+    parent_by_objgen = {
+        node.objgen: parent
+        for node, _depth, parent in structure_nodes
+        if node.objgen != (0, 0)
+    }
+
+    figure_by_ref: dict[tuple[int, int], list[pikepdf.Dictionary]] = defaultdict(list)
+    for node, _depth, _parent in structure_nodes:
+        if _get_struct_type(node) != "Figure":
+            continue
+        alt = str(node.get("/Alt", "")).strip()
+        actual_text = str(node.get("/ActualText", "")).strip()
+        if not actual_text and (not alt or _is_generic_alt_text(alt)):
+            continue
+        for ref in get_direct_mcid_refs(node, pdf):
+            figure_by_ref[ref].append(node)
+
+    def remove_struct_child(
+        parent: pikepdf.Dictionary,
+        child: pikepdf.Dictionary,
+    ) -> bool:
+        kids = parent.get("/K")
+        if kids is None:
+            return False
+        items = list(kids) if isinstance(kids, pikepdf.Array) else [kids]
+        kept = [
+            item
+            for item in items
+            if not (
+                isinstance(_resolve_pdf_object(item), pikepdf.Dictionary)
+                and _resolve_pdf_object(item).objgen == child.objgen
+            )
+        ]
+        if len(kept) == len(items):
+            return False
+        if not kept:
+            parent["/K"] = pikepdf.Array()
+        elif len(kept) == 1:
+            parent["/K"] = kept[0]
+        else:
+            parent["/K"] = pikepdf.Array(kept)
+        return True
+
+    def insert_after(
+        parent: pikepdf.Dictionary,
+        anchor: pikepdf.Dictionary,
+        child: pikepdf.Dictionary,
+    ) -> bool:
+        kids = parent.get("/K")
+        items = list(kids) if isinstance(kids, pikepdf.Array) else (
+            [kids] if kids is not None else []
+        )
+        for index, item in enumerate(items):
+            resolved = _resolve_pdf_object(item)
+            if isinstance(resolved, pikepdf.Dictionary) and resolved.objgen == anchor.objgen:
+                items.insert(index + 1, child)
+                parent["/K"] = pikepdf.Array(items)
+                return True
+        return False
+
+    hoisted = 0
+    figures = {
+        figure.objgen: figure
+        for figure_ref_list in figure_by_ref.values()
+        for figure in figure_ref_list
+    }
+    for figure in figures.values():
+        parent = parent_by_objgen.get(figure.objgen)
+        if parent is None or not re.fullmatch(r"H[1-6]?", _get_struct_type(parent)):
+            continue
+        grandparent = parent_by_objgen.get(parent.objgen)
+        if grandparent is None or not remove_struct_child(parent, figure):
+            continue
+        if not insert_after(grandparent, parent, figure):
+            # Restore the original relationship if the destination is malformed.
+            parent_kids = parent.get("/K")
+            restored = list(parent_kids) if isinstance(parent_kids, pikepdf.Array) else (
+                [parent_kids] if parent_kids is not None else []
+            )
+            restored.append(figure)
+            parent["/K"] = pikepdf.Array(restored)
+            continue
+        figure["/P"] = grandparent
+        hoisted += 1
+
+    aligned_tags = 0
+    for ref, candidates_list in figure_by_ref.items():
+        page_idx, mcid = ref
+        candidates = {candidate.objgen: candidate for candidate in candidates_list}
+        if (
+            len(candidates) == 1
+            and xobjects_for(page_idx, mcid)
+            and align_figure_marked_content(page_idx, mcid)
+        ):
+            aligned_tags += 1
+
+    def reassign_direct_ref(
+        owner: pikepdf.Dictionary,
+        figure: pikepdf.Dictionary,
+        page_idx: int,
+        mcid: int,
+    ) -> bool:
+        kids = owner.get("/K")
+        if kids is None:
+            return False
+        items = list(kids) if isinstance(kids, pikepdf.Array) else [kids]
+        default_page = _shared_find_node_page(owner, pdf)
+        kept = []
+        removed = False
+
+        for item in items:
+            resolved = _resolve_pdf_object(item)
+            item_page = default_page
+            item_mcid = None
+            if isinstance(resolved, pikepdf.Dictionary):
+                if "/S" not in resolved and "/MCID" in resolved:
+                    if resolved.get("/Pg") is not None:
+                        item_page = get_page_index_from_ref(pdf, resolved["/Pg"])
+                    try:
+                        item_mcid = int(resolved["/MCID"])
+                    except Exception:
+                        item_mcid = None
+            else:
+                try:
+                    item_mcid = int(resolved)
+                except Exception:
+                    item_mcid = None
+
+            if item_page == page_idx and item_mcid == mcid:
+                removed = True
+                continue
+            kept.append(item)
+
+        if not removed:
+            return False
+        current_owner = get_parent_tree_owner(pdf, page_idx, mcid)
+        if current_owner is None or current_owner.objgen != figure.objgen:
+            if not _set_parent_tree_entry(pdf, pdf.pages[page_idx], mcid, figure):
+                return False
+
+        if not kept:
+            owner["/K"] = pikepdf.Array()
+        elif len(kept) == 1:
+            owner["/K"] = kept[0]
+        else:
+            owner["/K"] = pikepdf.Array(kept)
+        placeholder = str(owner.get("/Alt", "")).strip().lower()
+        if placeholder.startswith("image content"):
+            del owner["/Alt"]
+        return True
+
+    reassigned_refs: set[tuple[int, int]] = set()
+    for ref, candidates_list in figure_by_ref.items():
+        page_idx, mcid = ref
+        if not xobjects_for(page_idx, mcid):
+            continue
+        candidates = {
+            candidate.objgen: candidate
+            for candidate in candidates_list
+        }
+        if len(candidates) != 1:
+            continue
+        figure = next(iter(candidates.values()))
+        owner = get_parent_tree_owner(pdf, page_idx, mcid)
+        if owner is not None and owner.objgen == figure.objgen:
+            continue
+        if _set_parent_tree_entry(pdf, pdf.pages[page_idx], mcid, figure):
+            reassigned_refs.add(ref)
+
+    text_roles = {"P", "Span", "H", "H1", "H2", "H3", "H4", "H5", "H6"}
+    for node, _depth, _parent in structure_nodes:
+        if _get_struct_type(node) not in text_roles:
+            continue
+        for page_idx, mcid in list(get_direct_mcid_refs(node, pdf)):
+            if not xobjects_for(page_idx, mcid):
+                continue
+            candidates = {
+                candidate.objgen: candidate
+                for candidate in figure_by_ref.get((page_idx, mcid), [])
+            }
+            if len(candidates) != 1:
+                continue
+            figure = next(iter(candidates.values()))
+            if reassign_direct_ref(node, figure, page_idx, mcid):
+                reassigned_refs.add((page_idx, mcid))
 
     annotated = 0
     for node, _depth, _parent in walk_structure_tree(pdf):
@@ -6001,30 +6179,207 @@ def fix_xobject_bearing_text_elements(pdf: pikepdf.Pdf) -> list[str]:
         # a different rule.
         if stype in {"Figure", "Formula", "Form"}:
             continue
-        mcids = _get_node_mcids(node)
-        if not mcids:
-            continue
-        page_idx = _find_node_page(node, pdf)
-        if page_idx < 0 or page_idx >= len(pdf.pages):
-            continue
-        if page_idx not in page_xobj_mcids:
-            try:
-                page_xobj_mcids[page_idx] = _page_mcid_has_xobject_do(pdf.pages[page_idx])
-            except Exception:
-                page_xobj_mcids[page_idx] = {}
-        xobj_map = page_xobj_mcids[page_idx]
         xobjs_here: list[str] = []
-        for mcid in mcids:
-            xobjs_here.extend(xobj_map.get(mcid, []))
+        for page_idx, mcid in get_direct_mcid_refs(node, pdf):
+            xobjs_here.extend(xobjects_for(page_idx, mcid))
         if not xobjs_here:
             continue
         alt = "Image content" if len(xobjs_here) == 1 else f"Image content ({len(xobjs_here)} graphics)"
         node["/Alt"] = pikepdf.String(alt)
         annotated += 1
 
+    changes = []
+    reassigned = len(reassigned_refs)
+    if reassigned == 1:
+        changes.append(
+            "Reassigned 1 image MCID ParentTree entry to an existing Figure"
+        )
+    elif reassigned:
+        changes.append(
+            f"Reassigned {reassigned} image MCID ParentTree entries to existing Figures"
+        )
+    if hoisted:
+        noun = "Figure" if hoisted == 1 else "Figures"
+        changes.append(f"Hoisted {hoisted} {noun} out of a heading element")
+    if aligned_tags:
+        noun = "tag" if aligned_tags == 1 else "tags"
+        changes.append(f"Aligned {aligned_tags} Figure marked-content {noun}")
     if annotated:
-        return [f"Added /Alt to {annotated} text-typed node(s) carrying XObject image content"]
-    return []
+        changes.append(
+            f"Added /Alt to {annotated} text-typed node(s) carrying XObject image content"
+        )
+    return changes
+
+
+def _document_accessible_text(pdf: pikepdf.Pdf) -> str:
+    parts: list[str] = []
+    for page in pdf.pages:
+        try:
+            parts.extend(
+                text.strip()
+                for text in _extract_mcid_text(page).values()
+                if text.strip()
+            )
+        except Exception:
+            continue
+    text = _normalize_extracted_text(" ".join(parts))
+    if "creative commons" not in text.lower() and getattr(pdf, "filename", None):
+        try:
+            import fitz
+
+            doc = fitz.open(str(pdf.filename))
+            text = _normalize_extracted_text(
+                text + " " + " ".join(page.get_text() for page in doc)
+            )
+            doc.close()
+        except Exception:
+            pass
+    return text
+
+
+def _artifactize_redundant_license_icons(pdf: pikepdf.Pdf) -> int:
+    """Artifact a CC mark only when accessible text states the full license."""
+    document_text = _document_accessible_text(pdf).lower()
+    if "creative commons" not in document_text or not re.search(
+        r"\b(?:license|licensed|licence|licenced)\b", document_text
+    ):
+        return 0
+
+    artifactized = 0
+    for _page_idx, figures in _figure_nodes_by_page(pdf).items():
+        for node, parent in figures:
+            if parent is None:
+                continue
+            image_path = _extract_figure_image(node, pdf)
+            if image_path is None:
+                continue
+            try:
+                ocr_text = _ocr_text_from_image(
+                    image_path,
+                    language=_tesseract_language_for_pdf(pdf),
+                )
+            finally:
+                image_path.unlink(missing_ok=True)
+
+            letters = re.sub(r"[^a-z]", "", ocr_text.lower())
+            if letters not in {"cc", "creativecommons"}:
+                continue
+            page_idx = _find_node_page(node, pdf)
+            if page_idx < 0:
+                continue
+            if _artifactize_figure_node(
+                pdf,
+                page_idx=page_idx,
+                node=node,
+                parent=parent,
+            ):
+                artifactized += 1
+    return artifactized
+
+
+def _contextual_figure_alt_text(
+    node: pikepdf.Dictionary,
+    pdf: pikepdf.Pdf,
+    image_path: Path | None,
+) -> str:
+    def clean_person_name(candidate: str) -> str:
+        parts = candidate.split()
+        while parts and parts[0].isupper():
+            parts.pop(0)
+        return " ".join(parts) if 2 <= len(parts) <= 4 else ""
+
+    if image_path is None:
+        return ""
+    try:
+        from PIL import Image
+
+        with Image.open(image_path) as image:
+            portrait_oriented = image.height > image.width * 1.1
+    except Exception:
+        portrait_oriented = False
+    if not portrait_oriented:
+        return ""
+
+    parent = None
+    for candidate, _depth, candidate_parent in walk_structure_tree(pdf):
+        if candidate.objgen == node.objgen:
+            parent = candidate_parent
+            break
+    if parent is not None:
+        context = _normalize_extracted_text(_extract_node_text_full(parent, pdf))
+        match = re.match(
+            r"^([A-Z][A-Za-z'’-]+(?:\s+[A-Z][A-Za-z'’-]+){1,3})\s+(?:is|was)\b",
+            context,
+        )
+        if match:
+            name = clean_person_name(match.group(1))
+            if name:
+                return f"Portrait of {name}."
+
+    page_idx = _find_node_page(node, pdf)
+    if page_idx < 0:
+        return ""
+    page_parts = list(_extract_mcid_text(pdf.pages[page_idx]).values())
+    if getattr(pdf, "filename", None):
+        try:
+            import fitz
+
+            doc = fitz.open(str(pdf.filename))
+            page_parts.append(doc[page_idx].get_text())
+            doc.close()
+        except Exception:
+            pass
+    page_context = _normalize_extracted_text(" ".join(page_parts))
+    names = []
+    for match in re.finditer(
+        r"\b([A-Z][A-Za-z'’-]+(?:\s+[A-Z][A-Za-z'’-]+){1,3})\s+(?:is|was)\b",
+        page_context,
+    ):
+        name = clean_person_name(match.group(1))
+        if not name:
+            continue
+        if name not in names:
+            names.append(name)
+
+    figures = [figure for figure, _parent in _figure_nodes_by_page(pdf).get(page_idx, [])]
+    claimed_names = {
+        name
+        for name in names
+        if any(
+            name.lower() in str(figure.get("/Alt", "") or "").lower()
+            for figure in figures
+            if figure.objgen != node.objgen
+        )
+    }
+    unclaimed_names = [name for name in names if name not in claimed_names]
+    missing_figures = [
+        figure
+        for figure in figures
+        if not str(figure.get("/Alt", "") or "").strip()
+        or _is_generic_alt_text(str(figure.get("/Alt", "") or "").strip())
+    ]
+    try:
+        figure_idx = next(
+            index
+            for index, figure in enumerate(missing_figures)
+            if figure.objgen == node.objgen
+        )
+    except StopIteration:
+        return ""
+    if figure_idx >= len(unclaimed_names):
+        return ""
+    return f"Portrait of {unclaimed_names[figure_idx]}."
+
+
+def _usable_ocr_alt_text(ocr_text: str) -> str:
+    normalized = _normalize_extracted_text(ocr_text)
+    tokens = re.findall(r"[A-Za-z0-9]{2,}", normalized)
+    alnum = sum(ch.isalnum() for ch in normalized)
+    if len(tokens) < 3 or not normalized:
+        return ""
+    if alnum / max(len(normalized), 1) < 0.55:
+        return ""
+    return f"Image containing text: {normalized}"
 
 
 def fix_figures_alt_text(pdf: pikepdf.Pdf, *, vision_provider=None) -> list[str]:
@@ -6037,6 +6392,13 @@ def fix_figures_alt_text(pdf: pikepdf.Pdf, *, vision_provider=None) -> list[str]
     Generic/placeholder alt text (e.g. "Figure", "Image", "image1.png")
     is treated the same as missing alt text and regenerated.
     """
+    changes = []
+    license_icons = _artifactize_redundant_license_icons(pdf)
+    if license_icons:
+        changes.append(
+            f"Artifactized {license_icons} redundant Creative Commons icon(s)"
+        )
+
     # Resolve RoleMap so producer-specific tags like /Diagram → /Figure are
     # treated as figures by Adobe and veraPDF's "Neither Alt nor ActualText
     # present for Figure" check.
@@ -6066,21 +6428,34 @@ def fix_figures_alt_text(pdf: pikepdf.Pdf, *, vision_provider=None) -> list[str]
             figures.append(node)
 
     if not figures:
-        return []
+        return changes
 
     if vision_provider is None:
         skip_image_extraction = len(pdf.pages) > 50
+        populated = 0
+        manual_review = 0
         for node in figures:
             image_path = None if skip_image_extraction else _extract_figure_image(node, pdf)
-            node["/Alt"] = pikepdf.String(
-                _fallback_figure_alt_text(node, pdf, image_path)
-            )
+            fallback = _fallback_figure_alt_text(node, pdf, image_path)
+            if fallback:
+                node["/Alt"] = pikepdf.String(fallback)
+                populated += 1
+            else:
+                if "/Alt" in node:
+                    del node["/Alt"]
+                manual_review += 1
             if image_path is not None:
                 try:
                     image_path.unlink(missing_ok=True)
                 except Exception:
                     pass
-        return [f"Set fallback /Alt on {len(figures)} figures"]
+        if populated:
+            changes.append(f"Set contextual fallback /Alt on {populated} figures")
+        if manual_review:
+            changes.append(
+                f"Manual review required for {manual_review} figure(s) without reliable alt text"
+            )
+        return changes
 
     # Vision-powered alt text generation — concurrent with classification.
     import asyncio
@@ -6103,6 +6478,7 @@ def fix_figures_alt_text(pdf: pikepdf.Pdf, *, vision_provider=None) -> list[str]
     described = 0
     retry_count = 0
     placeholder = 0
+    manual_review = 0
 
     async def _no_image_result():
         return None
@@ -6246,6 +6622,13 @@ def fix_figures_alt_text(pdf: pikepdf.Pdf, *, vision_provider=None) -> list[str]
             if not alt_text or _is_generic_alt_text(alt_text):
                 alt_text = _fallback_figure_alt_text(node, pdf, image_path)
                 used_fallback = True
+        if not alt_text:
+            if "/Alt" in node:
+                del node["/Alt"]
+            manual_review += 1
+            if image_path is not None:
+                image_path.unlink(missing_ok=True)
+            continue
         if len(alt_text) > 250:
             alt_text = alt_text[:247] + "..."
         node["/Alt"] = pikepdf.String(alt_text)
@@ -6261,7 +6644,6 @@ def fix_figures_alt_text(pdf: pikepdf.Pdf, *, vision_provider=None) -> list[str]
             except Exception:
                 pass
 
-    changes = []
     # Convert decorative figures to artifacts to avoid gray boxes
     artifactized = 0
     for (i, image_path), result in zip(figure_images, results):
@@ -6302,6 +6684,10 @@ def fix_figures_alt_text(pdf: pikepdf.Pdf, *, vision_provider=None) -> list[str]
     if placeholder:
         changes.append(
             f"Set fallback /Alt on {placeholder} figures (vision or image extraction unavailable)"
+        )
+    if manual_review:
+        changes.append(
+            f"Manual review required for {manual_review} figure(s) without reliable alt text"
         )
     return changes
 
@@ -6607,31 +6993,18 @@ def _fallback_figure_alt_text(
     pdf: pikepdf.Pdf,
     image_path: Path | None,
 ) -> str:
-    """Choose a pragmatic non-empty fallback alt text for a figure."""
+    """Return a reliable local fallback, or empty when review is required."""
+    contextual = _contextual_figure_alt_text(node, pdf, image_path)
+    if contextual:
+        return contextual
+
     if image_path is not None:
         ocr_text = _ocr_text_from_image(
             image_path,
             language=_tesseract_language_for_pdf(pdf),
         )
-        if ocr_text:
-            return f"Image containing text: {ocr_text}"
-
-    page_idx = _find_node_page(node, pdf)
-    if page_idx >= 0:
-        context = _normalize_extracted_text(_extract_page_text(pdf, page_idx))
-        if context:
-            if len(context) > 160:
-                context = context[:157].rstrip() + "..."
-            return f"Figure related to page text: {context}"
-
-    if not node_has_direct_content(node):
-        return "Decorative image"
-    if page_idx >= 0:
-        return (
-            f"Figure on page {page_idx + 1} with visual content associated "
-            "with this document"
-        )
-    return "Document figure with visual content associated with surrounding text"
+        return _usable_ocr_alt_text(ocr_text)
+    return ""
 
 
 def _extract_figure_image(
@@ -15396,31 +15769,33 @@ def fix_page_retag(pdf: pikepdf.Pdf) -> list[str]:
     for node, _depth, parent in walk_structure_tree(pdf):
         if parent is None:
             continue
-        mcids = _get_node_mcids(node)
-        if not mcids:
+        direct_refs = get_direct_mcid_refs(node, pdf)
+        if not direct_refs:
             continue
-        page_idx = _find_node_page(node, pdf)
-        if page_idx < 0 or page_idx >= len(pdf.pages):
-            # Node references an invalid page — orphan.
-            orphan_nodes.append((node, parent, -1, mcids))
-            continue
+        refs_by_page: dict[int, list[int]] = defaultdict(list)
+        for page_idx, mcid in direct_refs:
+            refs_by_page[page_idx].append(mcid)
 
-        stream_mcids = page_mcids.get(page_idx, set())
-        artifact_set = page_artifact_mcids.get(page_idx, set())
+        for page_idx, mcids in refs_by_page.items():
+            stream_mcids = page_mcids.get(page_idx, set())
+            artifact_set = page_artifact_mcids.get(page_idx, set())
+            all_artifact = all(m in artifact_set for m in mcids)
+            all_missing = all(m not in stream_mcids for m in mcids)
 
-        # Check if ALL of this node's MCIDs are either artifact-wrapped or missing.
-        all_artifact = all(m in artifact_set for m in mcids)
-        all_missing = all(m not in stream_mcids for m in mcids)
+            # Single-page leaf nodes can be removed as a unit. Multi-page
+            # elements must be reconciled per direct MCR so one stale page does
+            # not discard live content on another.
+            if len(refs_by_page) == 1 and (all_artifact or all_missing):
+                orphan_nodes.append((node, parent, page_idx, mcids))
+                continue
 
-        if all_artifact or all_missing:
-            orphan_nodes.append((node, parent, page_idx, mcids))
-        else:
             for m in mcids:
-                if m in stream_mcids:
-                    mcid_to_node[(page_idx, m)] = node
-                    mcid_to_parent[(page_idx, m)] = parent
-                    if _set_parent_tree_entry(pdf, pdf.pages[page_idx], m, node):
-                        backfilled_parent_tree_entries += 1
+                if m not in stream_mcids:
+                    continue
+                mcid_to_node[(page_idx, m)] = node
+                mcid_to_parent[(page_idx, m)] = parent
+                if _set_parent_tree_entry(pdf, pdf.pages[page_idx], m, node):
+                    backfilled_parent_tree_entries += 1
 
     # Phase 3: Resolve artifact conflicts.
     removed = 0
@@ -17154,6 +17529,15 @@ def fix_all(
                     else:
                         changes = fix_fn(pdf)
                     report.changes.extend(changes)
+                    manual_alt_changes = [
+                        change
+                        for change in changes
+                        if change.startswith("Manual review required for ")
+                        and "alt text" in change
+                    ]
+                    if manual_alt_changes:
+                        report.needs_manual_review = True
+                        report.manual_review_reason = "; ".join(manual_alt_changes)
                 except Exception as exc:
                     report.skipped.append(f"{description}: error — {exc}")
 
@@ -17263,6 +17647,46 @@ def fix_all(
 # ---------------------------------------------------------------------------
 # Post-fix verification loop
 # ---------------------------------------------------------------------------
+
+
+def _reconcile_manual_alt_review(report: FixReport) -> None:
+    """Clear an early alt-review flag when the final PDF now passes alt checks.
+
+    A first repair pass can leave a figure unresolved while a later structure or
+    conformance pass supplies meaningful alt text.  Keep manual-review state
+    aligned with the final artifact, without disturbing review flags raised for
+    visual fidelity or any other reason.
+    """
+    reason = report.manual_review_reason.strip()
+    if (
+        not report.needs_manual_review
+        or not reason.startswith("Manual review required for ")
+        or "alt text" not in reason.lower()
+        or not report.output_path.exists()
+    ):
+        return
+
+    try:
+        from project_remedy.pdf_checker import PDFAccessibilityChecker
+
+        checker = PDFAccessibilityChecker(report.output_path)
+        with pikepdf.open(report.output_path) as pdf:
+            final_alt_results = (
+                checker._check_figures_alt_text(pdf),
+                checker._check_elements_alt_text(pdf),
+            )
+        if all(result.status == "Passed" for result in final_alt_results):
+            report.needs_manual_review = False
+            report.manual_review_reason = ""
+            report.changes.append(
+                "Resolved manual alt-text review after final validation"
+            )
+    except Exception as exc:
+        logger.warning(
+            "Could not reconcile final manual alt-text review state for %s: %s",
+            report.output_path,
+            exc,
+        )
 
 
 def fix_and_verify(
@@ -17770,6 +18194,8 @@ def fix_and_verify(
         )
         _apply_final_heading_cleanup(report)
         _apply_final_structure_cleanup(report)
+
+    _reconcile_manual_alt_review(report)
 
     return report
 
@@ -18363,9 +18789,15 @@ def _artifactize_figure_node(
     raw = _read_page_content(page).decode("latin-1", errors="replace")
     updated = raw
     replaced = False
+    page_tags = get_mcid_marked_content_tags(page)
 
     for mcid in mcids:
-        match = _find_tagged_mcid_match(updated, mcid, tags=("Figure",))
+        tags = tuple(
+            tag
+            for tag in page_tags.get(mcid, ["Figure"])
+            if tag != "Artifact"
+        ) or ("Figure",)
+        match = _find_tagged_mcid_match(updated, mcid, tags=tags)
         if match is None:
             continue
         body = match.group(1).rstrip()
