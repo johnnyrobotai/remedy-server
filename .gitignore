@@ -104,6 +104,12 @@ scripts/laccd_smoke_batch.py
 !src/project_remedy/quality_judges/**/prompts/*.md
 !docs/prds/PRD_vlm_multi_lora_serving.md
 !docs/prds/SPEC_vlm_multi_lora_serving.md
+
+# Agent skill config (must follow both `docs/*` and `*.md` — last match wins)
+!docs/agents/
+!docs/agents/*.md
+!CLAUDE.md
+
 doc/
 knowledge-base/
 knowledge_base/
@@ -144,3 +150,6 @@ graphify-out/
 tests/*
 !tests/unit/
 !tests/unit/*.py
+
+# Large, reproducible handoff evidence (sweep PDFs, logs, scripts) — keep local, never commit
+handoff_artifacts/
