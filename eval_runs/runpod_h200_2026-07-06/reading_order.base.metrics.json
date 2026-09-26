@@ -1,0 +1,19 @@
+{
+  "by_task": {
+    "reading_order": {
+      "confusion": {
+        "fail->None": 8,
+        "fail->fail": 14,
+        "pass->None": 14,
+        "pass->fail": 6,
+        "pass->pass": 2
+      },
+      "corrected_order_accuracy": null,
+      "count": 44,
+      "pass_false_positive_rate": 0.1364,
+      "status_accuracy": 0.3636,
+      "valid_json_rate": 0.5
+    }
+  },
+  "total": 44
+}

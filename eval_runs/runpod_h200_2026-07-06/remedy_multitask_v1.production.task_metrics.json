@@ -1,0 +1,196 @@
+{
+  "corpus_checks": {
+    "contrast": {
+      "current_production_corpus_is_valid_gate": false,
+      "image_delta_stats": {
+        "available": true,
+        "identical_pairs": 23,
+        "max_mean_abs_pixel_delta": 15.0145,
+        "median_mean_abs_pixel_delta": 0.3596,
+        "pairs_checked": 65,
+        "pairs_missing_or_failed": 0
+      },
+      "reason": "TASK_DIMENSION for contrast is None and the source rows do not contain verified color-ratio labels."
+    }
+  },
+  "matched_result_rows": 441,
+  "missing_source_for_results": [],
+  "model_alias_semantics": {
+    "do_not_reuse_stable_alias_for_candidate": true,
+    "stable_current_alias": "qwen3vl-32b-remedy",
+    "stable_current_alias_points_to": "alt-text v2 adapter",
+    "weighted_multitask_candidate": "qwen3vl-32b-remedy-multitask-v1"
+  },
+  "recommendation": {
+    "candidate_alias": "qwen3vl-32b-remedy-multitask-v1",
+    "decision": "gather_better_eval_data_first",
+    "stable_alias": "qwen3vl-32b-remedy remains the stable alt-text v2 alias",
+    "summary": "Do not promote the weighted multitask adapter to qwen3vl-32b-remedy from this production corpus alone. Keep the stable alt alias and router fallback while contrast uses the verified contrast gate and heading/reading-order production examples get task-specific ground truth or manual audit."
+  },
+  "result_path": "/Users/laccd/code/lamc_district_forms/remedy-server-multitask-next/eval_runs/runpod_h200_2026-07-06/remedy_multitask_v1.production.jsonl",
+  "result_rows": 441,
+  "source_rows": 441,
+  "source_rows_without_results": 0,
+  "tasks": {
+    "alt_text_quality": {
+      "bad_detection_rate": 0.92,
+      "count": 51,
+      "gold_vs_bad_discrimination": {
+        "bad_flagged_more": 15,
+        "gold_flagged_more": 0,
+        "pairs": 17,
+        "ties": 2,
+        "win_rate": 0.8824
+      },
+      "json_parsed_rate": 1.0,
+      "mean_severity_by_variant": {
+        "bad": 1.36,
+        "gold": 0.0
+      },
+      "pass_false_positive_rate": 0.0,
+      "schema_valid_rate": 1.0,
+      "status_by_variant": {
+        "bad": {
+          "fail": 23,
+          "pass": 2
+        },
+        "gold": {
+          "pass": 26
+        }
+      },
+      "variant_expected_status_accuracy": 0.9608,
+      "variants": {
+        "bad": 25,
+        "gold": 26
+      }
+    },
+    "contrast": {
+      "bad_detection_rate": 0.0,
+      "count": 130,
+      "gate_applicability": "not_applicable_current_production_corpus",
+      "gate_reason": "production contrast records have no annotated contrast dimension; gold/bad variants are not verified foreground/background contrast pairs",
+      "gold_vs_bad_discrimination": {
+        "bad_flagged_more": 0,
+        "gold_flagged_more": 0,
+        "pairs": 65,
+        "ties": 65,
+        "win_rate": 0.0
+      },
+      "json_parsed_rate": 1.0,
+      "mean_severity_by_variant": {
+        "bad": 0.0,
+        "gold": 0.0
+      },
+      "pass_false_positive_rate": 0.0,
+      "relevant_dimension_counts": {
+        "None": 130
+      },
+      "required_gate_source": "tools/finetune/data_contrast/val.jsonl or verified contrast-specific real set",
+      "schema_valid_rate": 1.0,
+      "status_by_variant": {
+        "bad": {
+          "pass": 65
+        },
+        "gold": {
+          "pass": 65
+        }
+      },
+      "variant_expected_status_accuracy": 0.5,
+      "variants": {
+        "bad": 65,
+        "gold": 65
+      },
+      "verified_contrast_gate_metrics": {
+        "confusion": {
+          "fail->fail": 10,
+          "pass->pass": 7
+        },
+        "count": 17,
+        "near_threshold_status_accuracy": 1.0,
+        "pass_false_positive_rate": 0.0,
+        "status_accuracy": 1.0,
+        "valid_json_rate": 1.0
+      }
+    },
+    "heading_hierarchy": {
+      "bad_detection_rate": 0.5385,
+      "count": 130,
+      "gold_flag_classification_counts": {
+        "likely_model_false_positive": 1,
+        "likely_true_residual_structure_issue": 33
+      },
+      "gold_flagged_pages": 19,
+      "gold_vs_bad_discrimination": {
+        "bad_flagged_more": 25,
+        "gold_flagged_more": 7,
+        "pairs": 65,
+        "ties": 33,
+        "win_rate": 0.3846
+      },
+      "json_parsed_rate": 1.0,
+      "mean_severity_by_variant": {
+        "bad": 1.0462,
+        "gold": 0.6154
+      },
+      "pass_false_positive_rate": 0.2923,
+      "schema_valid_rate": 1.0,
+      "status_by_variant": {
+        "bad": {
+          "fail": 35,
+          "pass": 30
+        },
+        "gold": {
+          "fail": 19,
+          "pass": 46
+        }
+      },
+      "variant_expected_status_accuracy": 0.6231,
+      "variants": {
+        "bad": 65,
+        "gold": 65
+      }
+    },
+    "reading_order": {
+      "bad_detection_rate": 0.0308,
+      "corrected_order_accuracy": null,
+      "corrected_order_required": false,
+      "count": 130,
+      "empty_issues_means_pass": true,
+      "gold_vs_bad_discrimination": {
+        "bad_flagged_more": 2,
+        "gold_flagged_more": 0,
+        "pairs": 59,
+        "ties": 57,
+        "win_rate": 0.0339
+      },
+      "json_parsed_rate": 0.9538,
+      "mean_severity_by_variant": {
+        "bad": 0.0678,
+        "gold": 0.0
+      },
+      "miss_counts": {
+        "bad_not_flagged": 57,
+        "gold_flagged": 0,
+        "schema_invalid": 6
+      },
+      "pass_false_positive_rate": 0.0,
+      "schema": "page_layout + issues + summary",
+      "schema_valid_rate": 0.9538,
+      "status_by_variant": {
+        "bad": {
+          "None": 6,
+          "fail": 2,
+          "pass": 57
+        },
+        "gold": {
+          "pass": 65
+        }
+      },
+      "variant_expected_status_accuracy": 0.5403,
+      "variants": {
+        "bad": 65,
+        "gold": 65
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "model": "qwen3vl-32b-multitask",
+  "calls": 441,
+  "errors": 0,
+  "json_parsed_rate": 0.9864,
+  "valid_json_rate": 0.9864,
+  "valid_json_rate_by_task": {
+    "reading_order": 0.9538,
+    "heading_hierarchy": 1.0,
+    "contrast": 1.0,
+    "alt_text_quality": 1.0
+  },
+  "latency_p50_s": 3.43,
+  "latency_p95_s": 16.88,
+  "mean_severity_by_task_variant": {
+    "reading_order": {
+      "bad": 0.068,
+      "gold": 0
+    },
+    "heading_hierarchy": {
+      "bad": 1.046,
+      "gold": 0.615
+    },
+    "contrast": {
+      "bad": 0,
+      "gold": 0
+    },
+    "alt_text_quality": {
+      "bad": 1.36,
+      "gold": 0.0
+    }
+  },
+  "gold_vs_bad_discrimination": {
+    "reading_order": {
+      "pairs": 59,
+      "bad_flagged_more": 2,
+      "ties": 57,
+      "gold_flagged_more": 0,
+      "win_rate": 0.0339
+    },
+    "heading_hierarchy": {
+      "pairs": 65,
+      "bad_flagged_more": 25,
+      "ties": 33,
+      "gold_flagged_more": 7,
+      "win_rate": 0.3846
+    },
+    "contrast": {
+      "pairs": 65,
+      "bad_flagged_more": 0,
+      "ties": 65,
+      "gold_flagged_more": 0,
+      "win_rate": 0.0
+    },
+    "alt_text_quality": {
+      "pairs": 17,
+      "bad_flagged_more": 15,
+      "ties": 2,
+      "gold_flagged_more": 0,
+      "win_rate": 0.8824
+    }
+  }
+}

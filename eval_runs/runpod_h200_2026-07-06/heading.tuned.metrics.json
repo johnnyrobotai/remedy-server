@@ -1,0 +1,18 @@
+{
+  "by_task": {
+    "heading_hierarchy": {
+      "confusion": {
+        "fail->fail": 105,
+        "pass->pass": 105
+      },
+      "correction_precision": 0.8857,
+      "correction_recall": 0.8857,
+      "count": 210,
+      "exact_correction_accuracy": 0.8857,
+      "pass_false_positive_rate": 0.0,
+      "status_accuracy": 1.0,
+      "valid_json_rate": 1.0
+    }
+  },
+  "total": 210
+}

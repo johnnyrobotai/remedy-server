@@ -1,0 +1,301 @@
+{
+  "decision": "ready_for_heldout_lamc_pipeline_validation",
+  "final_ship_ready": false,
+  "final_ship_blocker": "Held-out real LAMC remediation pipeline validation has not been run against the live router profile.",
+  "stable_alias": "qwen3vl-32b-remedy",
+  "stable_alias_points_to": "alt-text v2 adapter",
+  "task_aliases": {
+    "alt_text_quality": "qwen3vl-32b-remedy",
+    "table_structure": "qwen3vl-32b-remedy-table-v1",
+    "contrast": "qwen3vl-32b-remedy-contrast-v1",
+    "reading_order": "qwen3vl-32b-remedy-reading-order-v1",
+    "heading_hierarchy": "qwen3vl-32b-remedy-heading-v1"
+  },
+  "adapters": [
+    {
+      "alias": "qwen3vl-32b-remedy",
+      "path": "/Users/laccd/code/lamc_district_forms/remedy-server/artifacts/lamc-qwen3vl-32b-lora-v2",
+      "has_config": true,
+      "has_weights": true,
+      "passed": true
+    },
+    {
+      "alias": "qwen3vl-32b-remedy-table-v1",
+      "path": "/Users/laccd/code/lamc_district_forms/remedy-server/artifacts/lamc-qwen3vl-32b-table-lora",
+      "has_config": true,
+      "has_weights": true,
+      "passed": true
+    },
+    {
+      "alias": "qwen3vl-32b-remedy-contrast-v1",
+      "path": "outputs_runpod/lamc-qwen3vl-32b-contrast-lora",
+      "has_config": true,
+      "has_weights": true,
+      "passed": true
+    },
+    {
+      "alias": "qwen3vl-32b-remedy-reading-order-v1",
+      "path": "outputs_runpod/lamc-qwen3vl-32b-reading-order-lora",
+      "has_config": true,
+      "has_weights": true,
+      "passed": true
+    },
+    {
+      "alias": "qwen3vl-32b-remedy-heading-v1",
+      "path": "outputs_runpod/lamc-qwen3vl-32b-heading-lora",
+      "has_config": true,
+      "has_weights": true,
+      "passed": true
+    }
+  ],
+  "task_gates": {
+    "alt_text_quality": [
+      {
+        "name": "alt valid_json_rate >= 0.90",
+        "passed": true,
+        "observed": 0.902,
+        "expected": {
+          "min": 0.9
+        },
+        "source": "/Users/laccd/code/lamc_district_forms/remedy-server/eval_runs/v2-alttext-full.jsonl.summary.json"
+      },
+      {
+        "name": "alt win_rate >= 0.90",
+        "passed": true,
+        "observed": 0.9333,
+        "expected": {
+          "min": 0.9
+        },
+        "source": "/Users/laccd/code/lamc_district_forms/remedy-server/eval_runs/v2-alttext-full.jsonl.summary.json"
+      },
+      {
+        "name": "alt gold_flagged_more == 0",
+        "passed": true,
+        "observed": 0,
+        "expected": {
+          "equals": 0
+        },
+        "source": "/Users/laccd/code/lamc_district_forms/remedy-server/eval_runs/v2-alttext-full.jsonl.summary.json"
+      }
+    ],
+    "table_structure": [
+      {
+        "name": "table status_accuracy >= 1.00",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 1.0
+        },
+        "source": "output/eval_runs/table.tuned.capped.metrics.json"
+      },
+      {
+        "name": "table valid_json_rate >= 0.90",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.9
+        },
+        "source": "output/eval_runs/table.tuned.capped.metrics.json"
+      },
+      {
+        "name": "table pass_false_positive_rate <= 0.10",
+        "passed": true,
+        "observed": 0.0,
+        "expected": {
+          "max": 0.1
+        },
+        "source": "output/eval_runs/table.tuned.capped.metrics.json"
+      }
+    ],
+    "contrast": [
+      {
+        "name": "contrast status_accuracy >= 0.90",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.9
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/contrast.tuned.metrics.json"
+      },
+      {
+        "name": "contrast near_threshold_status_accuracy >= 0.85",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.85
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/contrast.tuned.metrics.json"
+      },
+      {
+        "name": "contrast valid_json_rate >= 0.90",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.9
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/contrast.tuned.metrics.json"
+      },
+      {
+        "name": "contrast pass_false_positive_rate <= 0.10",
+        "passed": true,
+        "observed": 0.0,
+        "expected": {
+          "max": 0.1
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/contrast.tuned.metrics.json"
+      }
+    ],
+    "reading_order": [
+      {
+        "name": "reading_order status_accuracy >= 0.80",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.8
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/reading_order.tuned.metrics.json"
+      },
+      {
+        "name": "reading_order valid_json_rate >= 0.90",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.9
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/reading_order.tuned.metrics.json"
+      },
+      {
+        "name": "reading_order pass_false_positive_rate <= 0.10",
+        "passed": true,
+        "observed": 0.0,
+        "expected": {
+          "max": 0.1
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/reading_order.tuned.metrics.json"
+      }
+    ],
+    "heading_hierarchy": [
+      {
+        "name": "heading status_accuracy >= 0.95",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.95
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/heading.tuned.metrics.json"
+      },
+      {
+        "name": "heading exact_correction_accuracy >= 0.85",
+        "passed": true,
+        "observed": 0.8857,
+        "expected": {
+          "min": 0.85
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/heading.tuned.metrics.json"
+      },
+      {
+        "name": "heading valid_json_rate >= 0.90",
+        "passed": true,
+        "observed": 1.0,
+        "expected": {
+          "min": 0.9
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/heading.tuned.metrics.json"
+      },
+      {
+        "name": "heading pass_false_positive_rate <= 0.10",
+        "passed": true,
+        "observed": 0.0,
+        "expected": {
+          "max": 0.1
+        },
+        "source": "eval_runs/runpod_h200_2026-07-06/heading.tuned.metrics.json"
+      }
+    ]
+  },
+  "production_gates": [
+    {
+      "name": "production contrast corpus marked non-gating",
+      "passed": true,
+      "observed": false,
+      "expected": {
+        "equals": false
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.task_metrics.json"
+    },
+    {
+      "name": "stable alias remains alt-text v2",
+      "passed": true,
+      "observed": "qwen3vl-32b-remedy",
+      "expected": {
+        "equals": "qwen3vl-32b-remedy"
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.task_metrics.json"
+    },
+    {
+      "name": "multitask candidate not promoted",
+      "passed": true,
+      "observed": "gather_better_eval_data_first",
+      "expected": {
+        "equals": "gather_better_eval_data_first"
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.task_metrics.json"
+    }
+  ],
+  "live_router_gates": [
+    {
+      "name": "live router errors == 0",
+      "passed": true,
+      "observed": 0,
+      "expected": {
+        "equals": 0
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.jsonl.summary.json"
+    },
+    {
+      "name": "live router valid_json_rate >= 0.90",
+      "passed": true,
+      "observed": 0.9887,
+      "expected": {
+        "min": 0.9
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.jsonl.summary.json"
+    },
+    {
+      "name": "live router alt_text_quality valid_json_rate >= 0.90",
+      "passed": true,
+      "observed": 1.0,
+      "expected": {
+        "min": 0.9
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.jsonl.summary.json"
+    },
+    {
+      "name": "live router contrast valid_json_rate >= 0.90",
+      "passed": true,
+      "observed": 1.0,
+      "expected": {
+        "min": 0.9
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.jsonl.summary.json"
+    },
+    {
+      "name": "live router heading_hierarchy valid_json_rate >= 0.90",
+      "passed": true,
+      "observed": 0.9615,
+      "expected": {
+        "min": 0.9
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.jsonl.summary.json"
+    },
+    {
+      "name": "live router reading_order valid_json_rate >= 0.90",
+      "passed": true,
+      "observed": 1.0,
+      "expected": {
+        "min": 0.9
+      },
+      "source": "eval_runs/runpod_h200_2026-07-06/router_full.production.jsonl.summary.json"
+    }
+  ]
+}

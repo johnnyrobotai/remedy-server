@@ -1,0 +1,317 @@
+{
+  "file": "eval_runs/runpod_h200_2026-07-06/heldout_lamc_router_batch/Know-Your-Rights-Card-01-22-2025.router_fixed.pdf",
+  "file_size": 35806,
+  "page_count": 2,
+  "summary": {
+    "passed": 33,
+    "failed": 0,
+    "fixable": 0,
+    "manual": 0
+  },
+  "results": [
+    {
+      "rule_id": "doc-accessibility-permission",
+      "category": "Document",
+      "description": "Accessibility permission flag is set",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-not-image-only",
+      "category": "Document",
+      "description": "Document is not image-only PDF",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-tagged",
+      "category": "Document",
+      "description": "Document is tagged PDF",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-struct-tree-integrity",
+      "category": "Document",
+      "description": "Structure tree is internally consistent",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-reading-order",
+      "category": "Document",
+      "description": "Document structure provides logical reading order",
+      "status": "Passed",
+      "details": [
+        "Vision analysis: reading order is acceptable",
+        "Page 1: Could not render page: All vision attempts (1) failed for kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+        "Page 2: Could not render page: All vision attempts (1) failed for kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-language",
+      "category": "Document",
+      "description": "Text language is specified",
+      "status": "Passed",
+      "details": [
+        "Language: en-US"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-display-title",
+      "category": "Document",
+      "description": "Document title is showing in title bar",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-bookmarks",
+      "category": "Document",
+      "description": "Bookmarks are present in large documents",
+      "status": "Passed",
+      "details": [
+        "Document has 2 pages (≤20, bookmarks not required)"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-color-contrast",
+      "category": "Document",
+      "description": "Document has appropriate color contrast",
+      "status": "Passed",
+      "details": [
+        "Vision analysis: contrast is acceptable"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-content-tagged",
+      "category": "Page Content",
+      "description": "All page content is tagged",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-annotations-tagged",
+      "category": "Page Content",
+      "description": "All annotations are tagged",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-tab-order",
+      "category": "Page Content",
+      "description": "Tab order is consistent with structure order",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-char-encoding",
+      "category": "Page Content",
+      "description": "Reliable character encoding is provided",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-multimedia-tagged",
+      "category": "Page Content",
+      "description": "All multimedia objects are tagged",
+      "status": "Passed",
+      "details": [
+        "No multimedia objects found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-flicker",
+      "category": "Page Content",
+      "description": "Page will not cause screen flicker",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-scripts",
+      "category": "Page Content",
+      "description": "No inaccessible scripts",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-repetitive-links",
+      "category": "Page Content",
+      "description": "Navigation links are not repetitive",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-timed-responses",
+      "category": "Page Content",
+      "description": "Page does not require timed responses",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "forms-fields-tagged",
+      "category": "Forms Tables Lists",
+      "description": "All form fields are tagged",
+      "status": "Passed",
+      "details": [
+        "No form fields found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "forms-fields-description",
+      "category": "Forms Tables Lists",
+      "description": "All form fields have description",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-tr-parent",
+      "category": "Forms Tables Lists",
+      "description": "TR must be child of Table/THead/TBody/TFoot",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-th-td-parent",
+      "category": "Forms Tables Lists",
+      "description": "TH and TD must be children of TR",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-headers",
+      "category": "Forms Tables Lists",
+      "description": "Tables must have headers",
+      "status": "Passed",
+      "details": [
+        "No tables found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-regularity",
+      "category": "Forms Tables Lists",
+      "description": "Tables: same cols per row, same rows per col",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-summary",
+      "category": "Forms Tables Lists",
+      "description": "Tables must have a summary",
+      "status": "Passed",
+      "details": [
+        "No tables found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "lists-li-parent",
+      "category": "Forms Tables Lists",
+      "description": "LI must be child of L",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "lists-lbl-lbody-parent",
+      "category": "Forms Tables Lists",
+      "description": "Lbl and LBody must be children of LI",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-figures",
+      "category": "Alt Text Headings",
+      "description": "Figures require alternate text",
+      "status": "Passed",
+      "details": [
+        "No figures found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-redundant",
+      "category": "Alt Text Headings",
+      "description": "Alternate text that will never be read",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-associated",
+      "category": "Alt Text Headings",
+      "description": "Alternate text must be associated with content",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-hides-annotation",
+      "category": "Alt Text Headings",
+      "description": "Alternate text should not hide annotation",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-elements",
+      "category": "Alt Text Headings",
+      "description": "Elements require alternate text",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "headings-nesting",
+      "category": "Alt Text Headings",
+      "description": "Appropriate heading nesting",
+      "status": "Passed",
+      "details": [
+        "Vision analysis: heading hierarchy is acceptable",
+        "Page 1: Could not render page: All vision attempts (1) failed for kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+        "Page 2: Could not render page: All vision attempts (1) failed for kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401"
+      ],
+      "fixable": false
+    }
+  ]
+}
+Vision request failed on https://ollama.com with model kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Vision request failed on https://ollama.com with model kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Contrast analysis failed for page 1: All vision attempts (1) failed for kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Vision request failed on https://ollama.com with model kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Contrast analysis failed for page 2: All vision attempts (1) failed for kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Vision request failed on https://ollama.com with model kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Vision request failed on https://ollama.com with model kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Vision request failed on https://ollama.com with model kimi-k2.7-code:cloud: Client error '401 Unauthorized' for url 'https://ollama.com/api/chat'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401

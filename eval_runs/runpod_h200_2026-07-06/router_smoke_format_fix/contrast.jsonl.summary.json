@@ -1,0 +1,26 @@
+{
+  "model": "qwen3vl-32b-remedy",
+  "calls": 2,
+  "errors": 0,
+  "json_parsed_rate": 1.0,
+  "valid_json_rate": 1.0,
+  "valid_json_rate_by_task": {
+    "contrast": 1.0
+  },
+  "latency_p50_s": 3.1,
+  "latency_p95_s": 3.1,
+  "mean_severity_by_task_variant": {
+    "contrast": {
+      "gold": 0.5
+    }
+  },
+  "gold_vs_bad_discrimination": {
+    "contrast": {
+      "pairs": 0,
+      "bad_flagged_more": 0,
+      "ties": 0,
+      "gold_flagged_more": 0,
+      "win_rate": null
+    }
+  }
+}

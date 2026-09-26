@@ -1,0 +1,44 @@
+{
+  "source": "/Users/laccd/code/lamc_district_forms/lamc_remediated/_pre_csreorder_backup/2026 Spring Calendar.pdf",
+  "fixed": "eval_runs/runpod_h200_2026-07-06/heldout_lamc_router_smoke/2026_Spring_Calendar.router_fixed.pdf",
+  "normal_remediation_command": "remedy-pdf fix --thorough",
+  "router_profile": {
+    "primary": "qwen3vl-32b-remedy",
+    "task_models": {
+      "contrast": "qwen3vl-32b-remedy-contrast-v1",
+      "reading_order": "qwen3vl-32b-remedy-reading-order-v1",
+      "heading_hierarchy": "qwen3vl-32b-remedy-heading-v1",
+      "table_structure": "qwen3vl-32b-remedy-table-v1"
+    }
+  },
+  "check_summary": {
+    "passed": 33,
+    "failed": 0,
+    "fixable": 0,
+    "manual": 0
+  },
+  "report_summary": {
+    "passed_checks": 27,
+    "failed_checks": 0,
+    "sr_errors": 0,
+    "sr_warnings": 1,
+    "verapdf_checked": true,
+    "verapdf_passed": true,
+    "verapdf_violations": 0,
+    "wcag_pass": 17,
+    "wcag_fail": 0,
+    "wcag_na": 6
+  },
+  "visual_diff": {},
+  "text_fidelity": {
+    "source_normalized_chars": 3817,
+    "fixed_normalized_chars": 3817,
+    "normalized_text_equal": true
+  },
+  "artifacts": {
+    "fix_log": "eval_runs/runpod_h200_2026-07-06/heldout_lamc_router_smoke/2026_Spring_Calendar.fix.log",
+    "check_json": "eval_runs/runpod_h200_2026-07-06/heldout_lamc_router_smoke/2026_Spring_Calendar.check.json",
+    "report_json": "eval_runs/runpod_h200_2026-07-06/heldout_lamc_router_smoke/2026_Spring_Calendar.report.json"
+  },
+  "scope_note": "one-file held-out LAMC pipeline smoke, not a full held-out corpus validation"
+}

@@ -1,0 +1,548 @@
+{
+  "document_name": "DAY CLASSES",
+  "original": {
+    "file_path": "/Users/laccd/code/lamc_district_forms/lamc_remediated/_pre_csreorder_backup/2026 Spring Calendar.pdf",
+    "file_type": "pdf",
+    "file_size": 81779,
+    "source_url": "",
+    "is_tagged": true,
+    "has_language": true,
+    "has_title": true,
+    "page_count": 1
+  },
+  "remediated_path": "eval_runs/runpod_h200_2026-07-06/heldout_lamc_router_batch/2026_Spring_Calendar.router_fixed.pdf",
+  "remediated_size": 81711,
+  "remediated_pages": 1,
+  "conformance": "Conformant",
+  "check_results": [
+    {
+      "rule_id": "doc-accessibility-permission",
+      "category": "Document",
+      "description": "Accessibility permission flag is set",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-not-image-only",
+      "category": "Document",
+      "description": "Document is not image-only PDF",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-tagged",
+      "category": "Document",
+      "description": "Document is tagged PDF",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-struct-tree-integrity",
+      "category": "Document",
+      "description": "Structure tree is internally consistent",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-reading-order",
+      "category": "Document",
+      "description": "Document structure provides logical reading order",
+      "status": "Passed",
+      "details": [
+        "Structure tree text nodes progress in page order across 1/1 page(s)"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-language",
+      "category": "Document",
+      "description": "Text language is specified",
+      "status": "Passed",
+      "details": [
+        "Language: en-US"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-display-title",
+      "category": "Document",
+      "description": "Document title is showing in title bar",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-bookmarks",
+      "category": "Document",
+      "description": "Bookmarks are present in large documents",
+      "status": "Passed",
+      "details": [
+        "Document has 1 pages (≤20, bookmarks not required)"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "doc-color-contrast",
+      "category": "Document",
+      "description": "Document has appropriate color contrast",
+      "status": "Passed",
+      "details": [
+        "Deterministic raster check: text/background contrast is acceptable"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-content-tagged",
+      "category": "Page Content",
+      "description": "All page content is tagged",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-annotations-tagged",
+      "category": "Page Content",
+      "description": "All annotations are tagged",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-tab-order",
+      "category": "Page Content",
+      "description": "Tab order is consistent with structure order",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-char-encoding",
+      "category": "Page Content",
+      "description": "Reliable character encoding is provided",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-multimedia-tagged",
+      "category": "Page Content",
+      "description": "All multimedia objects are tagged",
+      "status": "Not Applicable",
+      "details": [
+        "No multimedia objects found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-flicker",
+      "category": "Page Content",
+      "description": "Page will not cause screen flicker",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-scripts",
+      "category": "Page Content",
+      "description": "No inaccessible scripts",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-repetitive-links",
+      "category": "Page Content",
+      "description": "Navigation links are not repetitive",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "page-no-timed-responses",
+      "category": "Page Content",
+      "description": "Page does not require timed responses",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "forms-fields-tagged",
+      "category": "Forms Tables Lists",
+      "description": "All form fields are tagged",
+      "status": "Not Applicable",
+      "details": [
+        "No form fields found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "forms-fields-description",
+      "category": "Forms Tables Lists",
+      "description": "All form fields have description",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-tr-parent",
+      "category": "Forms Tables Lists",
+      "description": "TR must be child of Table/THead/TBody/TFoot",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-th-td-parent",
+      "category": "Forms Tables Lists",
+      "description": "TH and TD must be children of TR",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-headers",
+      "category": "Forms Tables Lists",
+      "description": "Tables must have headers",
+      "status": "Not Applicable",
+      "details": [
+        "No tables found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-regularity",
+      "category": "Forms Tables Lists",
+      "description": "Tables: same cols per row, same rows per col",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "tables-summary",
+      "category": "Forms Tables Lists",
+      "description": "Tables must have a summary",
+      "status": "Not Applicable",
+      "details": [
+        "No tables found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "lists-li-parent",
+      "category": "Forms Tables Lists",
+      "description": "LI must be child of L",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "lists-lbl-lbody-parent",
+      "category": "Forms Tables Lists",
+      "description": "Lbl and LBody must be children of LI",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-figures",
+      "category": "Alt Text Headings",
+      "description": "Figures require alternate text",
+      "status": "Not Applicable",
+      "details": [
+        "No figures found"
+      ],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-redundant",
+      "category": "Alt Text Headings",
+      "description": "Alternate text that will never be read",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-associated",
+      "category": "Alt Text Headings",
+      "description": "Alternate text must be associated with content",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-hides-annotation",
+      "category": "Alt Text Headings",
+      "description": "Alternate text should not hide annotation",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "alt-elements",
+      "category": "Alt Text Headings",
+      "description": "Elements require alternate text",
+      "status": "Passed",
+      "details": [],
+      "fixable": false
+    },
+    {
+      "rule_id": "headings-nesting",
+      "category": "Alt Text Headings",
+      "description": "Appropriate heading nesting",
+      "status": "Not Applicable",
+      "details": [
+        "No headings found"
+      ],
+      "fixable": false
+    }
+  ],
+  "sr_issues": [
+    {
+      "rule_id": "sr-no-headings",
+      "severity": "warning",
+      "page": -1,
+      "element": "Document",
+      "description": "No headings found — screen reader users cannot navigate by heading",
+      "suggestion": "Add H1/H2 structure elements to enable heading navigation"
+    }
+  ],
+  "tag_count": 65,
+  "verapdf": {
+    "checked": true,
+    "passed": true,
+    "violations": []
+  },
+  "wcag_results": [
+    {
+      "criterion_id": "1.1.1",
+      "criterion_name": "Non-text Content",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "1.3.1",
+      "criterion_name": "Info and Relationships",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "1.3.2",
+      "criterion_name": "Meaningful Sequence",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "1.3.3",
+      "criterion_name": "Sensory Characteristics",
+      "level": "A",
+      "status": "N/A",
+      "remarks": "Not applicable to static PDF documents"
+    },
+    {
+      "criterion_id": "1.4.1",
+      "criterion_name": "Use of Color",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "1.4.3",
+      "criterion_name": "Contrast (Minimum)",
+      "level": "AA",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "1.4.5",
+      "criterion_name": "Images of Text",
+      "level": "AA",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.1.1",
+      "criterion_name": "Keyboard",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.1.2",
+      "criterion_name": "No Keyboard Trap",
+      "level": "A",
+      "status": "N/A",
+      "remarks": "Not applicable to static PDF documents"
+    },
+    {
+      "criterion_id": "2.2.1",
+      "criterion_name": "Timing Adjustable",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.3.1",
+      "criterion_name": "Three Flashes or Below Threshold",
+      "level": "A",
+      "status": "N/A",
+      "remarks": "No applicable checks for this document"
+    },
+    {
+      "criterion_id": "2.4.1",
+      "criterion_name": "Bypass Blocks",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.4.2",
+      "criterion_name": "Page Titled",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.4.4",
+      "criterion_name": "Link Purpose (In Context)",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.4.5",
+      "criterion_name": "Multiple Ways",
+      "level": "AA",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.4.6",
+      "criterion_name": "Headings and Labels",
+      "level": "AA",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "2.4.7",
+      "criterion_name": "Focus Visible",
+      "level": "AA",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "3.1.1",
+      "criterion_name": "Language of Page",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "3.1.2",
+      "criterion_name": "Language of Parts",
+      "level": "AA",
+      "status": "N/A",
+      "remarks": "Not applicable to static PDF documents"
+    },
+    {
+      "criterion_id": "3.2.3",
+      "criterion_name": "Consistent Navigation",
+      "level": "AA",
+      "status": "N/A",
+      "remarks": "Not applicable to static PDF documents"
+    },
+    {
+      "criterion_id": "3.2.4",
+      "criterion_name": "Consistent Identification",
+      "level": "AA",
+      "status": "N/A",
+      "remarks": "Not applicable to static PDF documents"
+    },
+    {
+      "criterion_id": "4.1.1",
+      "criterion_name": "Parsing",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    },
+    {
+      "criterion_id": "4.1.2",
+      "criterion_name": "Name, Role, Value",
+      "level": "A",
+      "status": "PASS",
+      "remarks": ""
+    }
+  ],
+  "summary": {
+    "passed_checks": 27,
+    "failed_checks": 0,
+    "sr_errors": 0,
+    "sr_warnings": 1,
+    "verapdf_checked": true,
+    "verapdf_passed": true,
+    "verapdf_violations": 0,
+    "wcag_pass": 17,
+    "wcag_fail": 0,
+    "wcag_na": 6
+  },
+  "visual_diff": {},
+  "issues": [
+    {
+      "code": "sr-no-headings",
+      "source": "screen-reader",
+      "severity": "warning",
+      "fixable": true,
+      "blocking": false,
+      "description": "No headings found — screen reader users cannot navigate by heading"
+    }
+  ],
+  "issue_summary": {
+    "total": 1,
+    "fixable": 1,
+    "source_limited": 0,
+    "blocking": 0
+  },
+  "screen_reader_readability": 98.0,
+  "screen_reader_readability_details": {
+    "text_extractability": {
+      "score": 30.0,
+      "max": 30,
+      "total_chars": 3894,
+      "readable_chars": 3894,
+      "replacement_chars": 0
+    },
+    "tag_coverage": {
+      "score": 25.0,
+      "max": 25,
+      "tagged_pages": 1,
+      "total_pages": 1,
+      "tags_per_page": 65.0
+    },
+    "alt_text_quality": {
+      "score": 20.0,
+      "max": 20,
+      "figures": 0,
+      "note": "no figures"
+    },
+    "heading_structure": {
+      "score": 13.0,
+      "max": 15,
+      "errors": 0,
+      "warnings": 1
+    },
+    "table_list_accessibility": {
+      "score": 10.0,
+      "max": 10,
+      "errors": 0
+    }
+  },
+  "generated_at": "2026-07-06T12:34:10.242784+00:00",
+  "report_filename": "2026-Spring-Calendarrouter-fixed-bc97864e.html",
+  "generator": "Remedy Server"
+}

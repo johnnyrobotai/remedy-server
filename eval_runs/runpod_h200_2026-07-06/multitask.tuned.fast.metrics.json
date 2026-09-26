@@ -1,0 +1,38 @@
+{
+  "by_task": {
+    "alt_text_quality": {
+      "confusion": {
+        "fail->fail": 25,
+        "pass->fail": 1,
+        "pass->pass": 24
+      },
+      "count": 50,
+      "pass_false_positive_rate": 0.0,
+      "status_accuracy": 0.98,
+      "valid_json_rate": 1.0
+    },
+    "contrast": {
+      "confusion": {
+        "fail->fail": 4,
+        "fail->pass": 6,
+        "pass->pass": 7
+      },
+      "count": 17,
+      "near_threshold_status_accuracy": 0.0,
+      "pass_false_positive_rate": 0.0,
+      "status_accuracy": 0.6471,
+      "valid_json_rate": 1.0
+    },
+    "table_structure": {
+      "confusion": {
+        "fail->fail": 10,
+        "pass->pass": 10
+      },
+      "count": 20,
+      "pass_false_positive_rate": 0.0,
+      "status_accuracy": 1.0,
+      "valid_json_rate": 1.0
+    }
+  },
+  "total": 87
+}

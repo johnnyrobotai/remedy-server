@@ -1,0 +1,243 @@
+{
+  "records": [
+    {
+      "source_name": "2026 Spring Calendar.pdf",
+      "passed": false,
+      "fix_elapsed_seconds": 69.05,
+      "check_summary": {
+        "passed": 32,
+        "failed": 1,
+        "fixable": 1,
+        "manual": 0
+      },
+      "report_summary": {
+        "passed_checks": 27,
+        "failed_checks": 0,
+        "sr_errors": 0,
+        "sr_warnings": 1,
+        "verapdf_checked": true,
+        "verapdf_passed": true,
+        "verapdf_violations": 0,
+        "wcag_pass": 17,
+        "wcag_fail": 0,
+        "wcag_na": 6
+      },
+      "text_fidelity": {
+        "available": true,
+        "source_normalized_chars": 3817,
+        "output_normalized_chars": 3817,
+        "normalized_text_equal": true
+      },
+      "failed_checks": [
+        {
+          "rule_id": "headings-nesting",
+          "description": "Appropriate heading nesting",
+          "details": [
+            "Page 1: title/section heading is tagged as body text (? -> H1) (Retag as H1)"
+          ],
+          "fixable": true
+        }
+      ],
+      "text_diff_samples": []
+    },
+    {
+      "source_name": "Major Sheets - Biology LAMC.pdf",
+      "passed": false,
+      "fix_elapsed_seconds": 130.116,
+      "check_summary": {
+        "passed": 32,
+        "failed": 1,
+        "fixable": 0,
+        "manual": 0
+      },
+      "report_summary": {
+        "passed_checks": 29,
+        "failed_checks": 0,
+        "sr_errors": 0,
+        "sr_warnings": 0,
+        "verapdf_checked": true,
+        "verapdf_passed": true,
+        "verapdf_violations": 0,
+        "wcag_pass": 16,
+        "wcag_fail": 0,
+        "wcag_na": 7
+      },
+      "text_fidelity": {
+        "available": true,
+        "source_normalized_chars": 5077,
+        "output_normalized_chars": 5083,
+        "normalized_text_equal": false
+      },
+      "failed_checks": [
+        {
+          "rule_id": "doc-color-contrast",
+          "description": "Document has appropriate color contrast",
+          "details": [
+            "Page 2: Body text contrast ratio is 4.5:1, below WCAG AA 4.5:1."
+          ],
+          "fixable": false
+        }
+      ],
+      "text_diff_samples": [
+        {
+          "tag": "insert",
+          "source": "M A J O R S H E E T S BIOLOGY Biology is a natural science that is concerned with the stud",
+          "output": "study of life and living organism including their structure, chemical processes,molecular interactions, physiological mechanisms, development, and evolution. The Biology major provides students with a broad base for understanding principles governing life processes at all levels–molecular, cellular, organism, and ecological.There are many general fields of biology, which include: Biochemistry, Botany, Cellular Biology, Ecology, Evolutionary Biology, Genetics, molecular biology, physiology, and zoology. Biology - option in Cellular and Molecular Biology, Ecology and Environmental Biology, or Microbiology Biology - option in "
+        },
+        {
+          "tag": "replace",
+          "source": "M A J O R S H E E T S BIOLOGY Biology is a natural science that is concerned with the study ",
+          "output": ", Genetics, molecular biology, physiology, and zoology. Biology - option in Cellular and Molecular Biology, Ecology and Environmental Biology, or Microbiology Biology - option in Biology Education, Molecular Cell Biology and Physiology, Organismal Biology, Microbiology, Marine Biology Biology and Microbiology Biology - option in Cellular and Chemistry Biology, Ecology and Evolutionary Biology, Biotechnology/Medical technology, Marine Technology, Microbiology Biology Biochemistry ad Molecular Biology, Biological Sciences, Biology/Education, Biomedical Engineering Biology, Integrative Biology Biology - option in General Biology, Human Biology, Microbiology, Molecular and Cell Biology thinking SKILLS about majors and careers please email us to make an appointment at careercenter@lamission.edu INTEREST LA Mission College Career Center BIOLOGY M A J O R S H E E T S WHAT IS BIOLOGY? Biology is "
+        },
+        {
+          "tag": "replace",
+          "source": "M A J O R S H E E T S BIOLOGY Biology is a natural science that is concerned with the study of life and living ",
+          "output": " careers please email us to make an appointment at careercenter@lamission.edu INTEREST LA Mission College Career Center BIOLOGY M A J O R S H E E T S WHAT IS BIOLOGY? Biology is a natural science that is conce"
+        }
+      ]
+    },
+    {
+      "source_name": "Know-Your-Rights-Card-01-22-2025.pdf",
+      "passed": false,
+      "fix_elapsed_seconds": 54.862,
+      "check_summary": {
+        "passed": 33,
+        "failed": 0,
+        "fixable": 0,
+        "manual": 0
+      },
+      "report_summary": {
+        "passed_checks": 28,
+        "failed_checks": 0,
+        "sr_errors": 0,
+        "sr_warnings": 0,
+        "verapdf_checked": true,
+        "verapdf_passed": true,
+        "verapdf_violations": 0,
+        "wcag_pass": 16,
+        "wcag_fail": 0,
+        "wcag_na": 7
+      },
+      "text_fidelity": {
+        "available": true,
+        "source_normalized_chars": 1881,
+        "output_normalized_chars": 1881,
+        "normalized_text_equal": false
+      },
+      "failed_checks": [],
+      "text_diff_samples": [
+        {
+          "tag": "insert",
+          "source": "a salir y si el agente dice que sí, váyase. Usted tiene derecho de hablar con un abogado. • No firme nada sin hablar con un abogado. • Entregue esta tarjeta al agente. No abra la p",
+          "output": "a salir y si el agente dice que sí, váyase. Usted tiene derecho de hablar con un abogado. No firme nada sin hablar con un abogado. • Entregue esta tarjeta al agente. No abra la puerta. Know Your Rights If you encounter an"
+        },
+        {
+          "tag": "insert",
+          "source": "salir y si el agente dice que sí, váyase. Usted tiene derecho de hablar con un abogado. • No firme nada sin hablar con un abogado. • Entregue esta tarjeta al agente. No abra la pue",
+          "output": " Usted tiene derecho de hablar con un abogado. No firme nada sin hablar con un abogado. • Entregue esta tarjeta al agente. No abra la puerta. Know Your Rights If you encounter an Immigration and Customs Enforcemen"
+        },
+        {
+          "tag": "insert",
+          "source": "ir y si el agente dice que sí, váyase. Usted tiene derecho de hablar con un abogado. • No firme nada sin hablar con un abogado. • Entregue esta tarjeta al agente. No abra la puerta",
+          "output": "n abogado. No firme nada sin hablar con un abogado. • Entregue esta tarjeta al agente. No abra la puerta. Know Your Rights If you encounter an Immigration and Customs Enforcement Officer at any Los Angeles Communit"
+        }
+      ]
+    },
+    {
+      "source_name": "Transcript-Form.pdf",
+      "passed": false,
+      "fix_elapsed_seconds": 51.357,
+      "check_summary": {
+        "passed": 32,
+        "failed": 1,
+        "fixable": 0,
+        "manual": 0
+      },
+      "report_summary": {
+        "passed_checks": 29,
+        "failed_checks": 0,
+        "sr_errors": 0,
+        "sr_warnings": 1,
+        "verapdf_checked": true,
+        "verapdf_passed": true,
+        "verapdf_violations": 0,
+        "wcag_pass": 17,
+        "wcag_fail": 0,
+        "wcag_na": 6
+      },
+      "text_fidelity": {
+        "available": true,
+        "source_normalized_chars": 1365,
+        "output_normalized_chars": 1365,
+        "normalized_text_equal": true
+      },
+      "failed_checks": [
+        {
+          "rule_id": "doc-color-contrast",
+          "description": "Document has appropriate color contrast",
+          "details": [
+            "Page 1: Body text contrast ratio is 4.5:1, below WCAG AA 4.5:1."
+          ],
+          "fixable": false
+        }
+      ],
+      "text_diff_samples": []
+    },
+    {
+      "source_name": "Major Sheets - Computer Science LAMC.pdf",
+      "passed": false,
+      "fix_elapsed_seconds": 124.404,
+      "check_summary": {
+        "passed": 32,
+        "failed": 1,
+        "fixable": 0,
+        "manual": 0
+      },
+      "report_summary": {
+        "passed_checks": 29,
+        "failed_checks": 0,
+        "sr_errors": 0,
+        "sr_warnings": 0,
+        "verapdf_checked": true,
+        "verapdf_passed": true,
+        "verapdf_violations": 0,
+        "wcag_pass": 16,
+        "wcag_fail": 0,
+        "wcag_na": 7
+      },
+      "text_fidelity": {
+        "available": true,
+        "source_normalized_chars": 4589,
+        "output_normalized_chars": 4598,
+        "normalized_text_equal": false
+      },
+      "failed_checks": [
+        {
+          "rule_id": "doc-color-contrast",
+          "description": "Document has appropriate color contrast",
+          "details": [
+            "Page 2: Body text contrast ratio is 4.5:1, below WCAG AA 4.5:1."
+          ],
+          "fixable": false
+        }
+      ],
+      "text_diff_samples": [
+        {
+          "tag": "insert",
+          "source": "M A J O R S H E E T S COMPUTER SCIENCE Computer Science is the study of computers and comp",
+          "output": "including their algorithmic processes, principles, their hardware and software designs, their applications and their impact on society. Principle areas of study within Computer Science include artificial intelligence, computer systems and networks, security, database systems, human computer interaction, vision and graphics, numerical analysis, programming languages, software engineering, bioinformatics and theory of computing. Computer Science Computer Science Computer Engineering and Computer Science Computer Science Computer Science Computer Science Computer Science Computer Science Computer Science, Computer Engineering, and Computer Science & Engineering Computer Science SKILLS about majors and careers please email us to make an appointment at careercenter@lamission.edu technology LA Mission College Career Center COMPUTER SCIENCE M A J O R S H E E T S WHAT IS COMPUTER SCIE"
+        },
+        {
+          "tag": "replace",
+          "source": "M A J O R S H E E T S COMPUTER SCIENCE Computer Science is the study of computers and computing, including thei",
+          "output": "reers please email us to make an appointment at careercenter@lamission.edu technology LA Mission College Career Center COMPUTER SCIENCE M A J O R S H E E T S WHAT IS COMPUTER SCIENCE? Computer Science is the "
+        },
+        {
+          "tag": "insert",
+          "source": "M A J O R S H E E T S COMPUTER SCIENCE Computer Science is the study of computers and computing, including their algorithmic proc",
+          "output": "t careercenter@lamission.edu technology LA Mission College Career Center COMPUTER SCIENCE M A J O R S H E E T S WHAT IS COMPUTER SCIENCE? Computer Science is the study of computers and computing, LAMC DEGREES & CERTIFICATES OFFE"
+        }
+      ]
+    }
+  ]
+}
