@@ -195,8 +195,6 @@ Each job kind maps to a dedicated handler in `backend/app/engine_service.py`. Th
 
 Vision-planner / Tier-3 agentic remediation is **not** part of this default flow. It's an opt-in tool (`/v1/vision-plan/run`) because the deterministic path is faster, cheaper, and more reliable on the corpus we've tested.
 
-For the full module map, see `CLAUDE.md`.
-
 ---
 
 ## Configuration

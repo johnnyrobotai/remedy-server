@@ -1,9 +1,7 @@
 # tools/finetune — QLoRA fine-tune scaffolding
 
 Dry-run the training pipeline on **Qwen2.5-VL-7B** on the RTX 4080, then scale the
-*same* scripts to **Qwen3-VL-32B** on a rented H100. Full setup + run instructions:
-**`docs/FINETUNE_HANDOFF_PROXMOX_LXC.md`** (hand this to the LXC operator/agent).
-Why + model ranking + the 8 tasks: `docs/VISION_MODEL_STRATEGY_2026-07-02.md`.
+*same* scripts to **Qwen3-VL-32B** on a rented H100.
 
 ## Pipeline
 ```
