@@ -132,9 +132,6 @@ tools/finetune/
 tools/corpus_annotations/v2_export/
 tools/corpus_annotations/v2_real_eval/
 
-# Graphify knowledge-graph output (generated, ~36MB) — not source
-graphify-out/
-
 # Committed unit tests (exception to the local-only tests/ policy above).
 # Keep tests/ ignored (heavy corpus/integration stays local) but commit only
 # tests/unit/*.py. Order matters — these are last-match-wins over the tests/
