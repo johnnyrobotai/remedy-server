@@ -36,7 +36,7 @@ One-command deploy to any Linux host with Docker. Ships Ghostscript + veraPDF + 
 
 ```bash
 # On the server:
-git clone https://github.com/projectremedyai/remedy-server
+git clone https://github.com/johnnyrobotai/remedy-server
 cd remedy-server
 
 # Set domain + optional Caddy global options + your API key.
